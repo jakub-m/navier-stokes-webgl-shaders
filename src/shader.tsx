@@ -42,7 +42,7 @@ export const Shader = () => {
     const data = new Float32Array(size * 4); // RGBA
 
     for (let i = 0; i < size; i++) {
-      data[i * 4] = 0; //Math.random(); // R
+      data[i * 4] = Math.random(); // R
       data[i * 4 + 1] = Math.random(); // G
       data[i * 4 + 2] = Math.random(); // B
       data[i * 4 + 3] = 1.0; // A
