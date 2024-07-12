@@ -1,5 +1,6 @@
 const path = require('path');
 const webpack = require('webpack');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
   entry: './src/index.tsx',
@@ -7,7 +8,8 @@ module.exports = {
     rules: [
       {
         test: /\.tsx?$/,
-        use: 'ts-loader',
+        //use: 'ts-loader',
+        use: 'babel-loader',
         exclude: /node_modules/,
       },
       {
@@ -22,6 +24,9 @@ module.exports = {
   plugins: [
     new webpack.DefinePlugin({
       PUBLIC_URL: "foo",
+    }),
+    new HtmlWebpackPlugin({
+      template: './src/index.html'
     })
 
   ],
