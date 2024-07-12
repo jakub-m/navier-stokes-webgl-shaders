@@ -1,6 +1,4 @@
-shader-fluid
-----------------
-
+## shader-fluid
 
 # Useful references
 

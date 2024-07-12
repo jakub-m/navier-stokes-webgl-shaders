@@ -1,33 +1,10 @@
-import React from 'react';
 import { useEffect } from "react";
 import * as THREE from "three";
+import vertexShader from './vertex_shader.glsl';
+import fragmentShader from './fragment_shader.glsl'
 
 export const Shader = () => {
   useEffect(() => {
-    // Vertex Shader
-    const vertexShader = `
-  varying vec2 vUv;
-  void main() {
-    vUv = uv;
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-  }
-`;
-
-    // Fragment Shader
-    const fragmentShader = `
-  varying vec2 vUv;
-  uniform sampler2D buffer;
-  uniform float width;
-  uniform float height;
-
-  void main() {
-    float x = vUv.x * width;
-    float y = vUv.y * height;
-    vec4 color = texture2D(buffer, vec2(x / width, y / height));
-    gl_FragColor = color;
-  }
-`;
-
     // Initialize Scene, Camera, Renderer
     const scene = new THREE.Scene();
     const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 10);
@@ -61,8 +38,8 @@ export const Shader = () => {
 
     // Shader Material
     const material = new THREE.ShaderMaterial({
-      vertexShader: vertexShader,
-      fragmentShader: fragmentShader,
+      vertexShader,
+      fragmentShader,
       uniforms: {
         buffer: { value: texture },
         width: { value: width },
@@ -83,5 +60,5 @@ export const Shader = () => {
 
     animate();
   }, []);
- return (<div>shader</div>)
+ return null
 };
