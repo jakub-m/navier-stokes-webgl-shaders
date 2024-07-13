@@ -18,18 +18,20 @@
    1. **attributes** are per-vertex values, used in Vertex shader. It's a read-only variable.
    1. **varying** are per-pixel values, read in Fragment shader. Can be written in vertex shader. Varying values are **interpolated**.
 
+1. There are different [**primitives**](https://www.khronos.org/opengl/wiki/Primitive) like triangles, lines and points.
 1. For JS to set attributes or uniforms variables, JS must obtain a **location** of the variable (a pointer) and use that location
    to interact with the variable.
 1. There are different [**targets**](https://gamedev.stackexchange.com/questions/93947/what-is-buffer-target-in-opengl)
    that are slots associated with "something", for example, a buffer. Targets are [predefined and well-known](https://registry.khronos.org/OpenGL-Refpages/gl4/html/glBindBuffer.xhtml), like ARRAY_BUFFER with vertex attributes.
 
-   1. Such an ARRAY_BUFFER (say a list of floats) would be accessed by vertex shader element by element. An "element" can be, for example, a triangle (3 x 2 floats).
+   1. Such an ARRAY_BUFFER (say a list of floats) would be accessed by vertex shader element by element. An "element" can be a "primitive", like a triangle (e.g. 3x2 floats each).
    1. You can bind a buffer to a target, and then you can modify the content of the buffer via the target (via the buffer variable).
       Copying data to the buffers is done with `bufferData`.
    1. Arrays of attributes (passed to vertex shader) need to be created with `createVertexArray`, bound with `bindVertexArray` and enabled with `enableVertexAttribArray`. Then you need to instruct the vertex shaders how to access the array with `vertexAttribPointer` (e.g. how many values to read per a single run of a shader) .
    1. OpenGL interfaces are weird.
 
 1. Uniforms are set with functions like [`uniform2f`](https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/uniform)
+1. A **clip space** is the virtual volume where the vertices are operated upon. All the dimensions of the clip space (including the "canvas" that represent the pixels on the screen) are in range of [-1, 1].
 
 # Useful references
 

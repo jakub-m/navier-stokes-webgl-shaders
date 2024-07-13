@@ -12,9 +12,10 @@ function render(vertexShaderSource, fragmentShaderSource, args) {
     var vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
     var fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
     var program = createProgram(gl, vertexShader, fragmentShader);
-    var positionAttributeLocation = gl.getAttribLocation(program, "a_position");
-    var resolutionUniformLocation = gl.getUniformLocation(program, "u_resolution");
+    var positionAttrLoc = gl.getAttribLocation(program, "a_position");
+    var resolutionUniLoc = gl.getUniformLocation(program, "u_resolution");
     var colorLocation = gl.getUniformLocation(program, "u_color");
+    var offsetUniLoc = gl.getUniformLocation(program, "u_offset")
     var positionBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
 
@@ -30,7 +31,7 @@ function render(vertexShaderSource, fragmentShaderSource, args) {
 
     var vao = gl.createVertexArray();
     gl.bindVertexArray(vao);
-    gl.enableVertexAttribArray(positionAttributeLocation);
+    gl.enableVertexAttribArray(positionAttrLoc);
 
     var size = 2;          // 2 components per iteration
     var type = gl.FLOAT;   // the data is 32bit floats
@@ -38,7 +39,7 @@ function render(vertexShaderSource, fragmentShaderSource, args) {
     var stride = 0;        // 0 = move forward size * sizeof(type) each iteration to get the next position
     var offset = 0;        // start at the beginning of the buffer
     gl.vertexAttribPointer(
-        positionAttributeLocation, size, type, normalize, stride, offset)
+        positionAttrLoc, size, type, normalize, stride, offset)
     resizeCanvasToDisplaySize(gl.canvas);
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
     // Clear the canvas
@@ -46,7 +47,7 @@ function render(vertexShaderSource, fragmentShaderSource, args) {
     gl.clear(gl.COLOR_BUFFER_BIT);
     // Tell it to use our program (pair of shaders)
     gl.useProgram(program);
-    gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
+    gl.uniform2f(resolutionUniLoc, gl.canvas.width, gl.canvas.height);
     // Bind the attribute/buffer set we want.
     // gl.bindVertexArray(vao);
     //var primitiveType = gl.TRIANGLES;
@@ -70,10 +71,9 @@ function render(vertexShaderSource, fragmentShaderSource, args) {
     //  gl.drawArrays(primitiveType, offset, count);
     //}
     gl.uniform4f(colorLocation, Math.random(), Math.random(), Math.random(), 1);
+    gl.uniform2f(offsetUniLoc, args.offsetX, 0)
     setGeometry(gl)
     gl.drawArrays(gl.TRIANGLES, 0, 3)
-
-
 }
 
 function createShader(gl, type, source) {

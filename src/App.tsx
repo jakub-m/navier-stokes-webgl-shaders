@@ -9,28 +9,27 @@ function App() {
   //console.log(foo)
   //foo.foo()
   //return (<div>foo</div>)
-  const [size, setSize] = useState(1.0)
+  const [offsetX, setOffsetX] = useState(0)
 
   return (
     <div style={{marginLeft: "3em"}}>
       <div style={{height: "3em"}}></div>
       <div className="sliderContainer">
-        Size
+        Offset x
         <Slider 
           size="small"
           valueLabelDisplay="auto"
-          min={0.5}
-          step={0.1}
-          max={2}
-          value={size}
+          min={0}
+          step={1}
+          max={100}
+          value={offsetX}
           onChange={(e) => {
             const t = e.target as HTMLInputElement;
-            setSize(parseFloat(t.value))
+            setOffsetX(parseInt(t.value))
           }}
-          
         />
       </div>
-      <Shader custom={{size}}/>
+      <Shader custom={{offsetX}}/>
     </div>
   );
 }

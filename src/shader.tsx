@@ -13,6 +13,6 @@ export interface ShaderProps {
 export const Shader = ({custom}: ShaderProps) => {
   useEffect(() => {
     renderCanvasWithShaders.render(vertexShader, fragmentShader, custom)
-  }, []);
+  }, [custom]);
  return <canvas id="c"></canvas>
 };
