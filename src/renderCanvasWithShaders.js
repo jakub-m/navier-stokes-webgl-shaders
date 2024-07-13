@@ -13,16 +13,19 @@ function render(vertexShaderSource, fragmentShaderSource) {
     var fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
     var program = createProgram(gl, vertexShader, fragmentShader);
     var positionAttributeLocation = gl.getAttribLocation(program, "a_position");
+    var resolutionUniformLocation = gl.getUniformLocation(program, "u_resolution");
     var positionBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
 
-    // three 2d points
     var positions = [
-        -1, -1,
-        -1, 1,
-        1, 1,
-    ];
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
+        10, 20,
+        80, 20,
+        10, 30,
+        10, 30,
+        80, 20,
+        80, 30,
+      ];
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
 
     var vao = gl.createVertexArray();
     gl.bindVertexArray(vao);
@@ -42,11 +45,12 @@ function render(vertexShaderSource, fragmentShaderSource) {
     gl.clear(gl.COLOR_BUFFER_BIT);
     // Tell it to use our program (pair of shaders)
     gl.useProgram(program);
+    gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
     // Bind the attribute/buffer set we want.
     gl.bindVertexArray(vao);
     var primitiveType = gl.TRIANGLES;
     var offset = 0;
-    var count = 3;
+    var count = 6;
     gl.drawArrays(primitiveType, offset, count);
 }
 
