@@ -71,7 +71,7 @@ function render(vertexShaderSource, fragmentShaderSource, args) {
     //  gl.drawArrays(primitiveType, offset, count);
     //}
     gl.uniform4f(colorLocation, Math.random(), Math.random(), Math.random(), 1);
-    gl.uniform2f(offsetUniLoc, args.offsetX, 0)
+    gl.uniform2f(offsetUniLoc, args.offset.x, args.offset.y)
     setGeometry(gl)
     gl.drawArrays(gl.TRIANGLES, 0, 3)
 }

@@ -8,8 +8,9 @@
 1. Fragment shader is a tiny program un on a tiny simple GPU machine that takes the output pixels and returns colors for the pixels. To figure the color of the pixels, at input it gets information from vertex shader. The information can be, for example, a place on a line or in a triangle that corresponds to the pixel that is being rendered.
    GPU _interpolates_ the values that enter the fragment shader. For example, when rendering a mid-point on a line between (0,0) and (1,1), the fragment shader will get (0.5,0.5) at input.
 
-1. Vertex and Fragment shader compose a Program.
+   1. Shaders have access to various [predefined variables](https://www.khronos.org/opengl/wiki/Fragment_Shader), e.g. a location of the current sample. Also, they can write to various pre-defined variables, like [`gl_Position`](https://registry.khronos.org/OpenGL-Refpages/gl4/html/gl_Position.xhtml) which is a position of a vertex (after all the operations in the shader).
 
+1. Vertex and Fragment shader compose a Program.
 1. There are many GPU cores and each runs the Program on its part of data.
 1. [Variables](http://www.lighthouse3d.com/tutorials/glsl-tutorial/data-types-and-variables/):
 
@@ -18,6 +19,7 @@
    1. **attributes** are per-vertex values, used in Vertex shader. It's a read-only variable.
    1. **varying** are per-pixel values, read in Fragment shader. Can be written in vertex shader. Varying values are **interpolated**.
 
+1. Shaders don't return anything, they set appropriate variables.
 1. There are different [**primitives**](https://www.khronos.org/opengl/wiki/Primitive) like triangles, lines and points.
 1. For JS to set attributes or uniforms variables, JS must obtain a **location** of the variable (a pointer) and use that location
    to interact with the variable.

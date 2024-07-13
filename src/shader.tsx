@@ -7,7 +7,7 @@ const renderCanvasWithShaders = require('./renderCanvasWithShaders')
 
 
 export interface ShaderProps {
-  custom: {[key: string]: string | number}
+  custom: {[key: string]: any}
 }
 
 export const Shader = ({custom}: ShaderProps) => {
