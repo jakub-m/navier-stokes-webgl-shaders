@@ -1,4 +1,4 @@
-function render(vertexShaderSource, fragmentShaderSource) {
+function render(vertexShaderSource, fragmentShaderSource, args) {
     const canvas = document.querySelector("#c");
     if (canvas === null) {
         console.error("canvas is missing")

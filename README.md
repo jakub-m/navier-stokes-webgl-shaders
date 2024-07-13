@@ -1,4 +1,16 @@
-## shader-fluid
+shader-fluid
+-----------------
+
+# Naive understanding of GPGPU
+
+1. There are two shaders: Vertex Shader and Fragment Shader.
+1. Vertex and Frament shader compose a Program.
+1. There are many GPU cores and each runs the Program on its part of data.
+1. [Variables](http://www.lighthouse3d.com/tutorials/glsl-tutorial/data-types-and-variables/):
+  1. **const** are constants at compile time.
+  1. **uniforms** are global variables. Used in both shaders.
+  1. **attributes** are per-vertex values, used in Vertex shader. It's a read-only variable.
+  1. **varying** are per-pixel values, read in Fragment shader. Can be written in vertex shader. Varying values are **interpolated**.
 
 # Useful references
 
