@@ -1,5 +1,13 @@
-  varying vec2 vUv;
-  void main() {
-    vUv = uv;
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-  }
+#version 300 es
+ 
+// an attribute is an input (in) to a vertex shader.
+// It will receive data from a buffer
+in vec4 a_position;
+ 
+// all shaders have a main function
+void main() {
+ 
+  // gl_Position is a special variable a vertex shader
+  // is responsible for setting
+  gl_Position = a_position;
+}
