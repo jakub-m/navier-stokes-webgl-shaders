@@ -1,3 +1,5 @@
+const { color } = require("@mui/system");
+
 function render(vertexShaderSource, fragmentShaderSource, args) {
     const canvas = document.querySelector("#c");
     if (canvas === null) {
@@ -13,34 +15,39 @@ function render(vertexShaderSource, fragmentShaderSource, args) {
     var fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
     var program = createProgram(gl, vertexShader, fragmentShader);
     var positionAttrLoc = gl.getAttribLocation(program, "a_position");
+    validateLocation({positionAttrLoc})
+    var colorAttrLoc = gl.getAttribLocation(program, "a_color");
+    validateLocation({colorAttrLoc})
     var resolutionUniLoc = gl.getUniformLocation(program, "u_resolution");
     var colorLocation = gl.getUniformLocation(program, "u_color");
     var offsetUniLoc = gl.getUniformLocation(program, "u_offset")
-    var positionBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-
-    var positions = [
-        10, 20,
-        80, 20,
-        10, 30,
-        10, 30,
-        80, 20,
-        80, 30,
-    ];
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
 
     var vao = gl.createVertexArray();
     gl.bindVertexArray(vao);
-    gl.enableVertexAttribArray(positionAttrLoc);
 
-    var size = 2;          // 2 components per iteration
-    var type = gl.FLOAT;   // the data is 32bit floats
-    var normalize = false; // don't normalize the data
-    var stride = 0;        // 0 = move forward size * sizeof(type) each iteration to get the next position
-    var offset = 0;        // start at the beginning of the buffer
-    gl.vertexAttribPointer(
-        positionAttrLoc, size, type, normalize, stride, offset)
+    // Start position
+    var positionBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+    gl.enableVertexAttribArray(positionAttrLoc);
+    gl_vertexAttribPointer({gl, index: positionAttrLoc, size: 2, type: gl.FLOAT, normalize: false, stride: 0, offset: 0})
+    setGeometry(gl)
+    // End position
+
+    // Start color
+    var colorBuffer = gl.createBuffer()
+    gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer)
+    gl.enableVertexAttribArray(colorAttrLoc)
+    var colorData = [
+        1, 0, 0, 1,
+        0, 1, 0, 1,
+        0, 0, 1, 1,
+    ]
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colorData), gl.STATIC_DRAW);
+    gl_vertexAttribPointer({gl, index: colorAttrLoc, size: 4, type: gl.FLOAT, normalize: false, stride: 0, offset: 0})
+    // End color
+
     resizeCanvasToDisplaySize(gl.canvas);
+
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
     // Clear the canvas
     gl.clearColor(0, 0, 0, 0);
@@ -48,31 +55,9 @@ function render(vertexShaderSource, fragmentShaderSource, args) {
     // Tell it to use our program (pair of shaders)
     gl.useProgram(program);
     gl.uniform2f(resolutionUniLoc, gl.canvas.width, gl.canvas.height);
-    // Bind the attribute/buffer set we want.
-    // gl.bindVertexArray(vao);
-    //var primitiveType = gl.TRIANGLES;
-    //var offset = 0;
-    //var count = 6;
-    //gl.drawArrays(primitiveType, offset, count);
 
-    //// draw 50 random rectangles in random colors
-    //for (var ii = 0; ii < 50; ++ii) {
-    //  // Setup a random rectangle
-    //  setRectangle(
-    //      gl, randomInt(300), randomInt(300), randomInt(300), randomInt(300));
- 
-    //  // Set a random color.
-    //  gl.uniform4f(colorLocation, Math.random(), Math.random(), Math.random(), 1);
- 
-    //  // Draw the rectangle.
-    //  var primitiveType = gl.TRIANGLES;
-    //  var offset = 0;
-    //  var count = 6;
-    //  gl.drawArrays(primitiveType, offset, count);
-    //}
     gl.uniform4f(colorLocation, Math.random(), Math.random(), Math.random(), 1);
     gl.uniform2f(offsetUniLoc, args.offset.x, args.offset.y)
-    setGeometry(gl)
     gl.drawArrays(gl.TRIANGLES, 0, 3)
 }
 
@@ -161,4 +146,44 @@ function setGeometry(gl) {
       gl.STATIC_DRAW);
 }
 
+/**
+    {
+        gl: null,
+        positionAttrLoc: null,
+        // components per iteration
+        size: null,
+        // the data is 32bit floats (or other)
+        type: null,
+        normalize: null,
+        // 0 = move forward size * sizeof(type) each iteration to get the next position
+        stride: null,
+        // start at the beginning of the buffer
+        offset: null,
+    }
+ */
+function gl_vertexAttribPointer(args) {
+    const {gl, index, size, type, normalize, stride, offset} = args
+    validateDefined(
+        {gl, index, size, type, normalize, stride, offset})
+    gl.vertexAttribPointer(
+        index, size, type, normalize, stride, offset)
+}
+
+function validateLocation(args) {
+    for (const key of Object.keys(args)) {
+        const v = args[key]
+        if (v === null || v < 0) {
+            console.error("Bad location:", key, "=", args[key])
+        }
+    }
+}
+
+function validateDefined(args) {
+    for (const key of Object.keys(args)) {
+        const v = args[key]
+        if (v === null || v === undefined) {
+            console.error("Value not defined:", key, "=", args[key])
+        }
+    }
+}
 module.exports.render = render
