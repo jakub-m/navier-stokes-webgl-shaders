@@ -1,8 +1,11 @@
 import React from "react";
 import { useEffect } from "react";
-import * as THREE from "three";
-import vertexShader from './vertex_shader.glsl';
-import fragmentShader from './fragment_shader.glsl'
+// import * as THREE from "three";
+// import vertexShader from './vertex_shader.glsl';
+// import fragmentShader from './fragment_shader.glsl'
+import drawArrayVS from './shaders/drawArrayVS.glsl'
+import drawArrayFS from './shaders/drawArrayFS.glsl'
+
 const renderCanvasWithShaders = require('./renderCanvasWithShaders')
 
 
@@ -12,7 +15,7 @@ export interface ShaderProps {
 
 export const Shader = ({custom}: ShaderProps) => {
   useEffect(() => {
-    renderCanvasWithShaders.render(vertexShader, fragmentShader, custom)
+    renderCanvasWithShaders.render(drawArrayVS, drawArrayFS, custom)
   }, [custom]);
  return <canvas id="c"></canvas>
 };
