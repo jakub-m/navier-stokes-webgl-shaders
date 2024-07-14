@@ -178,6 +178,7 @@ function initializeTexture(gl, a_texcoord_loc) {
 }
 
 function initializeTexturePositions(gl, a_texcoord_loc) {
+    gl.activeTexture(gl.TEXTURE0);
     validateDefined({gl, a_texcoord_loc})
     var texBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, texBuffer);
@@ -209,7 +210,6 @@ function initializeTexturePositions(gl, a_texcoord_loc) {
 function initializeTextureValues(gl) {
     validateDefined({gl})
     var texture = gl.createTexture();
-    gl.activeTexture(gl.TEXTURE0 + 0);
     gl.bindTexture(gl.TEXTURE_2D, texture);
     // TODO check larger texture
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0, 0, 255, 255]));
