@@ -5,8 +5,13 @@
 precision highp float;
 out vec4 outColor;
 
+in vec4 v_position;
+
 void main() {
-    outColor = vec4(1, 0, 0, 1);
+    //outColor = vec4(0, 1, 1, 1);
+    vec2 p = (v_position.xy + 1.0) / 2.0;
+    float c = sqrt((p.x * p.x) + (p.y * p.y));
+    outColor = vec4(c, c, c, 1);
 }
 
 //// The texture data, in practice the array of the data we want to visualize.

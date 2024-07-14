@@ -2,7 +2,6 @@ const { color } = require("@mui/system");
 
 
 // TODO:
-// Render square with gradient
 // Render square with texture
 
 function render(vertexShaderSource, fragmentShaderSource, args) {
