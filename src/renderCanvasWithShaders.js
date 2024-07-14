@@ -1,7 +1,9 @@
 const { color } = require("@mui/system");
 
-// TODO:
-// Render square with texture hardcoded, sampled from points.
+// TODO Render a matrix of points
+// TODO Render square with texture hardcoded, sampled from points.
+// TODO Have a program that modifies the matrix of points-
+
 
 function render(vertexShaderSource, fragmentShaderSource, args) {
     const gl = getGlContext("#c")
@@ -12,12 +14,14 @@ function render(vertexShaderSource, fragmentShaderSource, args) {
     var program = createProgram(gl, vertexShader, fragmentShader);
 
     var a_position_loc = gl.getAttribLocation(program, "a_position");
+    var a_texcoord_loc = gl.getAttribLocation(program, "a_texcoord");
     validateLocation({a_position_loc})
 
     var vao = gl.createVertexArray();
     gl.bindVertexArray(vao);
 
     const vertexCount = initializeVertexPosition(gl, a_position_loc, gl.canvas.width, gl.canvas.height)
+    initializeTexture(gl, a_texcoord_loc)
 
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
     // Clear the canvas
@@ -165,6 +169,44 @@ function initializeVertexPosition(gl, a_position_loc, width, height) {
       gl.STATIC_DRAW);
 
   return vertices.length / 2;
+}
+
+function initializeTexture(gl, a_texcoord_loc) {
+    initializeTexturePositions(gl, a_texcoord_loc)
+    initializeTextureValues(gl)
+}
+
+function initializeTexturePositions(gl, a_texcoord_loc) {
+    validateDefined({gl, a_texcoord_loc})
+    var texBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, texBuffer);
+    // The texture positions must correspond to the vertices positions.
+    const texPositions = [
+      0, 0,
+      1, 1,
+      0, 1,
+      0, 0,
+      1, 0,
+      1, 1,
+    ]
+    gl.bufferData(
+        gl.ARRAY_BUFFER,
+        new Float32Array(texPositions),
+        gl.STATIC_DRAW)
+    gl.enableVertexAttribArray(a_texcoord_loc);
+    gl_vertexAttribPointer({
+        gl,
+        index: a_texcoord_loc,
+        size: 2,// 2 components per iteration
+        type: gl.FLOAT,
+        normalize: true, // convert from 0-255 to 0.0-1.0
+        stride: 0,
+        offset: 0,
+    });
+}
+
+function initializeTextureValues(gl) {
+    validateDefined({gl})
 }
 
 function gl_vertexAttribPointer(args) {

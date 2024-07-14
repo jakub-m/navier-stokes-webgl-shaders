@@ -3,9 +3,11 @@
 //Fragment shader to draw array of float values in range of 0,1
  
 precision highp float;
-out vec4 outColor;
 
 in vec4 v_position;
+in vec2 v_texcoord;
+
+out vec4 outColor;
 
 void main() {
     //outColor = vec4(0, 1, 1, 1);
