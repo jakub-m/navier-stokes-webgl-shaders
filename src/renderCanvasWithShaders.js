@@ -5,7 +5,9 @@ const { color } = require("@mui/system");
 // TODO Have a program that modifies the matrix of points-
 
 
-function render(vertexShaderSource, fragmentShaderSource, args) {
+function render(args) {
+    const {vertexShaderSource, fragmentShaderSource, custom} = args
+    validateDefined({vertexShaderSource, fragmentShaderSource, custom})
     console.log("gl: render")
     const gl = getGlContext("#c")
     resizeCanvasToDisplaySize(gl.canvas);
