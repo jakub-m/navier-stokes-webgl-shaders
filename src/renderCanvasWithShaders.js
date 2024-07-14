@@ -16,8 +16,10 @@ function render(vertexShaderSource, fragmentShaderSource, args) {
     var program = createProgram(gl, vertexShader, fragmentShader);
     var positionAttrLoc = gl.getAttribLocation(program, "a_position");
     validateLocation({positionAttrLoc})
-    var colorAttrLoc = gl.getAttribLocation(program, "a_color");
-    validateLocation({colorAttrLoc})
+    // var colorAttrLoc = gl.getAttribLocation(program, "a_color");
+    // validateLocation({colorAttrLoc})
+    var texcoordAttrLoc = gl.getAttribLocation(program, "a_texcoord")
+    validateLocation({texcoordAttrLoc})
     var resolutionUniLoc = gl.getUniformLocation(program, "u_resolution");
     var colorLocation = gl.getUniformLocation(program, "u_color");
     var offsetUniLoc = gl.getUniformLocation(program, "u_offset")
@@ -33,18 +35,69 @@ function render(vertexShaderSource, fragmentShaderSource, args) {
     setGeometry(gl)
     // End position
 
-    // Start color
-    var colorBuffer = gl.createBuffer()
-    gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer)
-    gl.enableVertexAttribArray(colorAttrLoc)
-    var colorData = [
-        1, 0, 0, 1,
-        0, 1, 0, 1,
-        0, 0, 1, 1,
-    ]
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colorData), gl.STATIC_DRAW);
-    gl_vertexAttribPointer({gl, index: colorAttrLoc, size: 4, type: gl.FLOAT, normalize: false, stride: 0, offset: 0})
-    // End color
+    // // Start color
+    // var colorBuffer = gl.createBuffer()
+    // gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer)
+    // gl.enableVertexAttribArray(colorAttrLoc)
+    // var colorData = [
+    //     1, 0, 0, 1,
+    //     0, 1, 0, 1,
+    //     0, 0, 1, 1,
+    // ]
+    // gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colorData), gl.STATIC_DRAW);
+    // gl_vertexAttribPointer({gl, index: colorAttrLoc, size: 4, type: gl.FLOAT, normalize: false, stride: 0, offset: 0})
+    // // End color
+    // Start texture
+    var texcoordBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, texcoordBuffer)
+    setTexcoords(gl) // just the coordinates, not the texture itself.
+    gl.enableVertexAttribArray(texcoordAttrLoc)
+    gl_vertexAttribPointer( {gl, index: texcoordAttrLoc, size: 2, type: gl.FLOAT, normalize: false, stride: 0, offset: 0});
+
+    var texture = gl.createTexture()
+    //// now the texture image
+    //var texture = gl.createTexture()
+    //gl.activeTexture(gl.TEXTURE0 + 0);
+    //gl.bindTexture(gl.TEXTURE_2D, texture);
+    //// placeholder texture
+    //gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 2, 2, 0, gl.RGBA, gl.UNSIGNED_BYTE,
+    //    new Uint8Array([
+    //        255,   0, 255, 255,
+    //          0, 255, 255, 255,
+    //        255,   0,   0, 255,
+    //          0, 255, 255, 255,
+    //    ]))
+    //gl.generateMipmap(gl.TEXTURE_2D);
+    //gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+    //gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+
+    var image = new Image();
+    image.src = "f-texture.png";
+    // image.src = "logo192.png";
+    image.addEventListener('load', function() {
+      console.log("image loaded", image)
+      //// Now that the image has loaded make copy it to the texture.
+      createImageBitmap(image).then((bitmap) => {
+        console.log("bitmap", bitmap)
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        gl.texImage2D(
+            gl.TEXTURE_2D,
+            0,
+            gl.RGBA,
+            gl.RGBA,
+            gl.UNSIGNED_BYTE,
+            bitmap);
+        gl.generateMipmap(gl.TEXTURE_2D);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      })
+    });
+
+
+
+    // End texture
 
     resizeCanvasToDisplaySize(gl.canvas);
 
@@ -146,6 +199,17 @@ function setGeometry(gl) {
       gl.STATIC_DRAW);
 }
 
+function setTexcoords(gl) {
+    gl.bufferData(
+        gl.ARRAY_BUFFER,
+        new Float32Array([
+            0, 0,
+            0, 1,
+            1, 1,
+            ]),
+        gl.STATIC_DRAW);
+}
+
 /**
     {
         gl: null,
@@ -161,6 +225,7 @@ function setGeometry(gl) {
         offset: null,
     }
  */
+
 function gl_vertexAttribPointer(args) {
     const {gl, index, size, type, normalize, stride, offset} = args
     validateDefined(
@@ -186,4 +251,5 @@ function validateDefined(args) {
         }
     }
 }
+
 module.exports.render = render
