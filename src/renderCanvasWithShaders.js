@@ -5,7 +5,6 @@ const { color } = require("@mui/system");
 // Render square with gradient
 // Render square with texture
 
-
 function render(vertexShaderSource, fragmentShaderSource, args) {
     const gl = getGlContext("#c")
     resizeCanvasToDisplaySize(gl.canvas);

@@ -3,8 +3,8 @@ import { useEffect } from "react";
 // import * as THREE from "three";
 // import vertexShader from './vertex_shader.glsl';
 // import fragmentShader from './fragment_shader.glsl'
-import drawArrayVS from './shaders/drawArrayVS.glsl'
-import drawArrayFS from './shaders/drawArrayFS.glsl'
+import drawArrayVS from './shaders/drawArray.vertexShader.glsl'
+import drawArrayFS from './shaders/drawArray.fragmentShader.glsl'
 
 const renderCanvasWithShaders = require('./renderCanvasWithShaders')
 
