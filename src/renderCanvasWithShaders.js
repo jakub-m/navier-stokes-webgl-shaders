@@ -1,8 +1,7 @@
 const { color } = require("@mui/system");
 
-
 // TODO:
-// Render square with texture
+// Render square with texture hardcoded, sampled from points.
 
 function render(vertexShaderSource, fragmentShaderSource, args) {
     const gl = getGlContext("#c")
@@ -114,15 +113,6 @@ function createProgram(gl, vertexShader, fragmentShader) {
     }
  */
 
-function validateLocation(args) {
-    for (const key of Object.keys(args)) {
-        const v = args[key]
-        if (v === null || v < 0) {
-            console.error("Bad location:", key, "=", args[key])
-        }
-    }
-}
-
 function getGlContext(selector) {
     const canvas = document.querySelector(selector);
     if (canvas === null) {
@@ -195,6 +185,15 @@ function validateDefined(args) {
     }
 }
 
+function validateLocation(args) {
+    for (const key of Object.keys(args)) {
+        const v = args[key]
+        if (v === null || v < 0) {
+            console.error("Bad location:", key, "=", args[key])
+        }
+    }
+}
+
 /**
  * Ensure that the canvas has the same number of pixels as displayed on the screen. This is no obvious
  * because you could have canvas that has logically 10x10 pixels displayed as 40x40 picture on screen.
@@ -214,8 +213,6 @@ function resizeCanvasToDisplaySize(canvas) {
       canvas.width  = displayWidth;
       canvas.height = displayHeight;
     }
-   
-    console.log({displayHeight, displayWidth})
     return needResize;
   }
 
