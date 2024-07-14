@@ -1,10 +1,9 @@
 import React from "react";
 import { useEffect } from "react";
-// import * as THREE from "three";
-// import vertexShader from './vertex_shader.glsl';
-// import fragmentShader from './fragment_shader.glsl'
 import drawTextureVS from './shaders/drawTexture.vertexShader.glsl'
 import drawTextureFS from './shaders/drawTexture.fragmentShader.glsl'
+import createTextureVS from './shaders/createTexture.vertexShader.glsl'
+import createTextureFS from './shaders/createTexture.fragmentShader.glsl'
 
 const renderCanvasWithShaders = require('./renderCanvasWithShaders')
 
@@ -16,8 +15,10 @@ export interface ShaderProps {
 export const Shader = ({custom}: ShaderProps) => {
   useEffect(() => {
     renderCanvasWithShaders.render({
-        vertexShaderSource: drawTextureVS,
-        fragmentShaderSource: drawTextureFS,
+        drawTextureToScreenVS: drawTextureVS,
+        drawTextureToScreenFS: drawTextureFS,
+        createTextureVS,
+        createTextureFS,
         custom,
     })
   }, [custom]);

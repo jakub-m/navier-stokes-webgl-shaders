@@ -4,16 +4,32 @@ const { color } = require("@mui/system");
 // TODO Render square with texture hardcoded, sampled from points.
 // TODO Have a program that modifies the matrix of points-
 
+const canvasId = "#c"
 
 function render(args) {
-    const {vertexShaderSource, fragmentShaderSource, custom} = args
-    validateDefined({vertexShaderSource, fragmentShaderSource, custom})
-    console.log("gl: render")
-    const gl = getGlContext("#c")
+    const {
+        drawTextureToScreenVS,
+        drawTextureToScreenFS,
+        createTextureVS,
+        createTextureFS,
+        custom,
+    } = args
+    validateDefined({
+        drawTextureToScreenVS,
+        drawTextureToScreenFS,
+        createTextureVS,
+        createTextureFS,
+        custom,
+    })
+    renderTextureToCanvas(drawTextureToScreenVS, drawTextureToScreenFS)
+}
+
+function renderTextureToCanvas(drawTextureToScreenVS, drawTextureToScreenFS) {
+    const gl = getGlContext(canvasId)
     resizeCanvasToDisplaySize(gl.canvas);
 
-    var vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
-    var fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
+    var vertexShader = createShader(gl, gl.VERTEX_SHADER, drawTextureToScreenVS);
+    var fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, drawTextureToScreenFS);
     var program = createProgram(gl, vertexShader, fragmentShader);
 
     var a_position_loc = gl.getAttribLocation(program, "a_position");
@@ -63,8 +79,6 @@ function createProgram(gl, vertexShader, fragmentShader) {
     console.error("createProgram", gl.getProgramInfoLog(program));
     gl.deleteProgram(program);
 }
-
-
 
 
 function getGlContext(selector) {
