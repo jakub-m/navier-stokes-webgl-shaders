@@ -74,6 +74,7 @@ function renderTextureToCanvas(gl, drawTextureToScreenVS, drawTextureToScreenFS,
     initFullSquareTexturePos(gl, a_texcoord_loc)
     //initializeTextureValues(gl)
 
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);  // Render to the canvas.
     gl.bindTexture(gl.TEXTURE_2D, texture);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); // gl.NEAREST_MIPMAP_LINEAR is default
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
@@ -86,7 +87,6 @@ function renderTextureToCanvas(gl, drawTextureToScreenVS, drawTextureToScreenFS,
     gl.clear(gl.COLOR_BUFFER_BIT);
     // Tell it to use our program (pair of shaders)
     gl.useProgram(program);
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null);  // Render to the canvas.
     gl.drawArrays(gl.TRIANGLES, 0, vertexCount)
 }
 
