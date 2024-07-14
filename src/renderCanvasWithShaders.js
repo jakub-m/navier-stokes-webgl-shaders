@@ -6,6 +6,7 @@ const { color } = require("@mui/system");
 
 
 function render(vertexShaderSource, fragmentShaderSource, args) {
+    console.log("gl: render")
     const gl = getGlContext("#c")
     resizeCanvasToDisplaySize(gl.canvas);
 
@@ -21,7 +22,7 @@ function render(vertexShaderSource, fragmentShaderSource, args) {
     gl.bindVertexArray(vao);
 
     const vertexCount = initializeVertexPosition(gl, a_position_loc, gl.canvas.width, gl.canvas.height)
-    initializeTexture(gl, a_texcoord_loc)
+    initializeTexture(gl, a_texcoord_loc, 0)
 
     // Tell WebGL how to convert from clip space to pixels
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
@@ -63,60 +64,6 @@ function createProgram(gl, vertexShader, fragmentShader) {
 
 
 
-
-// // Returns a random integer from 0 to range - 1.
-// function randomInt(range) {
-//     return Math.floor(Math.random() * range);
-// }
-   
-// // Fills the buffer with the values that define a rectangle.
-// function setRectangle(gl, x, y, width, height) {
-//   var x1 = x;
-//   var x2 = x + width;
-//   var y1 = y;
-//   var y2 = y + height;
-//  
-//   // NOTE: gl.bufferData(gl.ARRAY_BUFFER, ...) will affect
-//   // whatever buffer is bound to the `ARRAY_BUFFER` bind point
-//   // but so far we only have one buffer. If we had more than one
-//   // buffer we'd want to bind that buffer to `ARRAY_BUFFER` first.
-//  
-//   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
-//      x1, y1,
-//      x2, y1,
-//      x1, y2,
-//      x1, y2,
-//      x2, y1,
-//      x2, y2]), gl.STATIC_DRAW);
-// }
-
-
-//function setTexcoords(gl) {
-//    gl.bufferData(
-//        gl.ARRAY_BUFFER,
-//        new Float32Array([
-//            0, 0,
-//            0, 1,
-//            1, 1,
-//            ]),
-//        gl.STATIC_DRAW);
-//}
-
-/**
-    {
-        gl: null,
-        positionAttrLoc: null,
-        // components per iteration
-        size: null,
-        // the data is 32bit floats (or other)
-        type: null,
-        normalize: null,
-        // 0 = move forward size * sizeof(type) each iteration to get the next position
-        stride: null,
-        // start at the beginning of the buffer
-        offset: null,
-    }
- */
 
 function getGlContext(selector) {
     const canvas = document.querySelector(selector);
@@ -172,13 +119,46 @@ function initializeVertexPosition(gl, a_position_loc, width, height) {
   return vertices.length / 2;
 }
 
-function initializeTexture(gl, a_texcoord_loc) {
+function initializeTexture(gl, a_texcoord_loc, textureNumber) {
+    gl.activeTexture(gl.TEXTURE0 + textureNumber);
     initializeTexturePositions(gl, a_texcoord_loc)
     initializeTextureValues(gl)
 }
 
+
+function createOutputTexture(gl) {
+    validateDefined({gl})
+    // create to render to
+    const targetTextureWidth = 256;
+    const targetTextureHeight = 256;
+    const targetTexture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, targetTexture);
+     
+    // define size and format of level 0
+    const level = 0;
+    const internalFormat = gl.RGBA;
+    const border = 0;
+    const format = gl.RGBA;
+    const type = gl.UNSIGNED_BYTE;
+    const data = null;
+    gl.texImage2D(gl.TEXTURE_2D, level, internalFormat,
+                  targetTextureWidth, targetTextureHeight, border,
+                  format, type, data);
+   
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+    // Create and bind the framebuffer
+    const fb = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+    // attach the texture as the first color attachment
+    const attachmentPoint = gl.COLOR_ATTACHMENT0;
+    gl.framebufferTexture2D( gl.FRAMEBUFFER, attachmentPoint, gl.TEXTURE_2D, targetTexture, level);
+}
+
+
 function initializeTexturePositions(gl, a_texcoord_loc) {
-    gl.activeTexture(gl.TEXTURE0);
     validateDefined({gl, a_texcoord_loc})
     var texBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, texBuffer);
@@ -216,11 +196,11 @@ function initializeTextureValues(gl) {
         [
             0, 0, 255, 255, // bottom-left
             0, 0, 255, 255, // bottom-right
-            255, 0, 255, 255, // top-left
-            0, 0, 255, 255, // top-right
+            255, 0, 0, 255, // red top-left
+            0, 255, 0, 255, // green top-right
         ]
     ));
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST); // gl.NEAREST_MIPMAP_LINEAR is default
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); // gl.NEAREST_MIPMAP_LINEAR is default
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 }
