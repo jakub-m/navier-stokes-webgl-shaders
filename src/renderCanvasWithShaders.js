@@ -22,13 +22,15 @@ function render(args) {
         custom,
     })
     const gl = getGlContext(canvasId)
-    renderToTexture(gl, createTextureVS, createTextureFS)
-    renderTextureToCanvas(gl, drawTextureToScreenVS, drawTextureToScreenFS)
+    const targetTexture = gl.createTexture();
+    gl.activeTexture(gl.TEXTURE0 + 0);
+    renderToTexture(gl, createTextureVS, createTextureFS, targetTexture)
+    renderTextureToCanvas(gl, drawTextureToScreenVS, drawTextureToScreenFS, targetTexture)
 }
 
-function renderToTexture(gl, createTextureVS, createTextureFS) {
+function renderToTexture(gl, createTextureVS, createTextureFS, targetTexture) {
     console.log("renderToTexture")
-    validateDefined({gl, createTextureVS, createTextureFS})
+    validateDefined({gl, createTextureVS, createTextureFS, targetTexture})
     var vertexShader = createShader(gl, gl.VERTEX_SHADER, createTextureVS);
     var fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, createTextureFS);
     var program = createProgram(gl, vertexShader, fragmentShader);
@@ -41,10 +43,9 @@ function renderToTexture(gl, createTextureVS, createTextureFS) {
     var vao = gl.createVertexArray();
     gl.bindVertexArray(vao);
 
-    const vertexCount = initFullSquareVertexPos(gl, a_position_loc)
-    createOutputAndFrameBufferTexture(gl);
-    // gl.activeTexture(gl.TEXTURE0 + textureNumber);
     initFullSquareTexturePos(gl, a_texcoord_loc)
+    const vertexCount = initFullSquareVertexPos(gl, a_position_loc)
+    createOutputAndFrameBufferTexture(gl, targetTexture);
 
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT);
@@ -52,9 +53,9 @@ function renderToTexture(gl, createTextureVS, createTextureFS) {
     gl.drawArrays(gl.TRIANGLES, 0, vertexCount)
 }
 
-function renderTextureToCanvas(gl, drawTextureToScreenVS, drawTextureToScreenFS) {
+function renderTextureToCanvas(gl, drawTextureToScreenVS, drawTextureToScreenFS, texture) {
     console.log("renderTextureToCanvas")
-    validateDefined({gl, drawTextureToScreenVS, drawTextureToScreenFS})
+    validateDefined({gl, drawTextureToScreenVS, drawTextureToScreenFS, texture})
     resizeCanvasToDisplaySize(gl.canvas);
 
     var vertexShader = createShader(gl, gl.VERTEX_SHADER, drawTextureToScreenVS);
@@ -69,7 +70,14 @@ function renderTextureToCanvas(gl, drawTextureToScreenVS, drawTextureToScreenFS)
     gl.bindVertexArray(vao);
 
     const vertexCount = initFullSquareVertexPos(gl, a_position_loc)
-    initializeTexture(gl, a_texcoord_loc, 0)
+    //initializeTexture(gl, a_texcoord_loc, 0) // TODO here
+    initFullSquareTexturePos(gl, a_texcoord_loc)
+    //initializeTextureValues(gl)
+
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); // gl.NEAREST_MIPMAP_LINEAR is default
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
     // Tell WebGL how to convert from clip space to pixels
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
@@ -171,11 +179,10 @@ function initializeTexture(gl, a_texcoord_loc, textureNumber) {
     initializeTextureValues(gl)
 }
 
-function createOutputAndFrameBufferTexture(gl) {
-    validateDefined({gl})
+function createOutputAndFrameBufferTexture(gl, targetTexture) {
+    validateDefined({gl, targetTexture})
     const targetTextureWidth = 256;
     const targetTextureHeight = 256;
-    const targetTexture = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, targetTexture);
      
     // define size and format of level 0
@@ -199,7 +206,7 @@ function createOutputAndFrameBufferTexture(gl) {
     gl.viewport(0, 0, targetTextureWidth, targetTextureHeight);
     // attach the texture as the first color attachment
     const attachmentPoint = gl.COLOR_ATTACHMENT0;
-    gl.framebufferTexture2D( gl.FRAMEBUFFER, attachmentPoint, gl.TEXTURE_2D, targetTexture, level);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, attachmentPoint, gl.TEXTURE_2D, targetTexture, level);
 }
 
 function initFullSquareTexturePos(gl, a_texcoord_loc) {
