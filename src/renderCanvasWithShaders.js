@@ -21,11 +21,40 @@ function render(args) {
         createTextureFS,
         custom,
     })
-    renderTextureToCanvas(drawTextureToScreenVS, drawTextureToScreenFS)
+    const gl = getGlContext(canvasId)
+    renderToTexture(gl, createTextureVS, createTextureFS)
+    renderTextureToCanvas(gl, drawTextureToScreenVS, drawTextureToScreenFS)
 }
 
-function renderTextureToCanvas(drawTextureToScreenVS, drawTextureToScreenFS) {
-    const gl = getGlContext(canvasId)
+function renderToTexture(gl, createTextureVS, createTextureFS) {
+    console.log("renderToTexture")
+    validateDefined({gl, createTextureVS, createTextureFS})
+    var vertexShader = createShader(gl, gl.VERTEX_SHADER, createTextureVS);
+    var fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, createTextureFS);
+    var program = createProgram(gl, vertexShader, fragmentShader);
+
+    // TODO Share positions between the shader.
+    var a_position_loc = gl.getAttribLocation(program, "a_position");
+    var a_texcoord_loc = gl.getAttribLocation(program, "a_texcoord");
+    validateLocation({a_position_loc, a_texcoord_loc})
+
+    var vao = gl.createVertexArray();
+    gl.bindVertexArray(vao);
+
+    const vertexCount = initFullSquareVertexPos(gl, a_position_loc)
+    createOutputAndFrameBufferTexture(gl);
+    // gl.activeTexture(gl.TEXTURE0 + textureNumber);
+    initFullSquareTexturePos(gl, a_texcoord_loc)
+
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.useProgram(program);
+    gl.drawArrays(gl.TRIANGLES, 0, vertexCount)
+}
+
+function renderTextureToCanvas(gl, drawTextureToScreenVS, drawTextureToScreenFS) {
+    console.log("renderTextureToCanvas")
+    validateDefined({gl, drawTextureToScreenVS, drawTextureToScreenFS})
     resizeCanvasToDisplaySize(gl.canvas);
 
     var vertexShader = createShader(gl, gl.VERTEX_SHADER, drawTextureToScreenVS);
@@ -34,12 +63,12 @@ function renderTextureToCanvas(drawTextureToScreenVS, drawTextureToScreenFS) {
 
     var a_position_loc = gl.getAttribLocation(program, "a_position");
     var a_texcoord_loc = gl.getAttribLocation(program, "a_texcoord");
-    validateLocation({a_position_loc})
+    validateLocation({a_position_loc, a_texcoord_loc})
 
     var vao = gl.createVertexArray();
     gl.bindVertexArray(vao);
 
-    const vertexCount = initializeVertexPosition(gl, a_position_loc, gl.canvas.width, gl.canvas.height)
+    const vertexCount = initFullSquareVertexPos(gl, a_position_loc)
     initializeTexture(gl, a_texcoord_loc, 0)
 
     // Tell WebGL how to convert from clip space to pixels
@@ -49,6 +78,7 @@ function renderTextureToCanvas(drawTextureToScreenVS, drawTextureToScreenFS) {
     gl.clear(gl.COLOR_BUFFER_BIT);
     // Tell it to use our program (pair of shaders)
     gl.useProgram(program);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);  // Render to the canvas.
     gl.drawArrays(gl.TRIANGLES, 0, vertexCount)
 }
 
@@ -96,8 +126,8 @@ function getGlContext(selector) {
 }
 
 
-function initializeVertexPosition(gl, a_position_loc, width, height) {
-    validateDefined({gl, a_position_loc, width, height})
+function initFullSquareVertexPos(gl, a_position_loc) {
+    validateDefined({gl, a_position_loc})
     var positionBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
     gl.enableVertexAttribArray(a_position_loc);
@@ -111,40 +141,38 @@ function initializeVertexPosition(gl, a_position_loc, width, height) {
         offset: 0,
     })
 
-
-  const w = 1
-  const h = 1
-
-  // -w, h  | w, h
-  // -w, -h | w, -h
-  const vertices = [
-    // ccw
-    -w, -h,
-     w,  h,
-    -w,  h,
-    //
-    -w, -h,
-     w, -h,
-     w,  h,
-  ]
-  gl.bufferData(
-      gl.ARRAY_BUFFER,
-      new Float32Array(vertices),
-      gl.STATIC_DRAW);
-
-  return vertices.length / 2;
+    const w = 1
+    const h = 1
+  
+    // -w, h  | w, h
+    // -w, -h | w, -h
+    const vertices = [
+      // ccw
+      -w, -h,
+       w,  h,
+      -w,  h,
+      //
+      -w, -h,
+       w, -h,
+       w,  h,
+    ]
+    gl.bufferData(
+        gl.ARRAY_BUFFER,
+        new Float32Array(vertices),
+        gl.STATIC_DRAW,
+    );
+  
+    return vertices.length / 2;
 }
 
 function initializeTexture(gl, a_texcoord_loc, textureNumber) {
     gl.activeTexture(gl.TEXTURE0 + textureNumber);
-    initializeTexturePositions(gl, a_texcoord_loc)
+    initFullSquareTexturePos(gl, a_texcoord_loc)
     initializeTextureValues(gl)
 }
 
-
-function createOutputTexture(gl) {
+function createOutputAndFrameBufferTexture(gl) {
     validateDefined({gl})
-    // create to render to
     const targetTextureWidth = 256;
     const targetTextureHeight = 256;
     const targetTexture = gl.createTexture();
@@ -168,13 +196,13 @@ function createOutputTexture(gl) {
     // Create and bind the framebuffer
     const fb = gl.createFramebuffer();
     gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+    gl.viewport(0, 0, targetTextureWidth, targetTextureHeight);
     // attach the texture as the first color attachment
     const attachmentPoint = gl.COLOR_ATTACHMENT0;
     gl.framebufferTexture2D( gl.FRAMEBUFFER, attachmentPoint, gl.TEXTURE_2D, targetTexture, level);
 }
 
-
-function initializeTexturePositions(gl, a_texcoord_loc) {
+function initFullSquareTexturePos(gl, a_texcoord_loc) {
     validateDefined({gl, a_texcoord_loc})
     var texBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, texBuffer);
