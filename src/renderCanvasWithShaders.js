@@ -23,6 +23,7 @@ function render(vertexShaderSource, fragmentShaderSource, args) {
     const vertexCount = initializeVertexPosition(gl, a_position_loc, gl.canvas.width, gl.canvas.height)
     initializeTexture(gl, a_texcoord_loc)
 
+    // Tell WebGL how to convert from clip space to pixels
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
     // Clear the canvas
     gl.clearColor(0, 0, 0, 0);
@@ -207,6 +208,11 @@ function initializeTexturePositions(gl, a_texcoord_loc) {
 
 function initializeTextureValues(gl) {
     validateDefined({gl})
+    var texture = gl.createTexture();
+    gl.activeTexture(gl.TEXTURE0 + 0);
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    // TODO check larger texture
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0, 0, 255, 255]));
 }
 
 function gl_vertexAttribPointer(args) {
