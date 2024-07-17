@@ -1,10 +1,9 @@
 const { color } = require("@mui/system");
 
-// TODO Render a matrix of points
-// TODO Render square with texture hardcoded, sampled from points.
-// TODO Have a program that modifies the matrix of points-
-
 const canvasId = "#c"
+
+const TEXTURE_ID_TARGET = 0
+const TEXTURE_ID_INPUT = 1
 
 function render(args) {
     const {
@@ -22,14 +21,28 @@ function render(args) {
         custom,
     })
     const gl = getGlContext(canvasId)
+    const inputTexture = gl.createTexture()
     const targetTexture = gl.createTexture();
-    gl.activeTexture(gl.TEXTURE0 + 0);
+
+    gl.activeTexture(gl.TEXTURE0 + TEXTURE_ID_INPUT);
+    gl.bindTexture(gl.TEXTURE_2D, inputTexture);
+    // console.log("createOutputTexture: inputTexture")
+    createOutputTexture(gl, inputTexture, 2, 2, [
+        255, 0,0,255,
+        255, 0,0,255,
+        255, 0,0,255,
+        255, 0,0,255,
+
+    ])
+
+    gl.activeTexture(gl.TEXTURE0 + TEXTURE_ID_TARGET);
+    gl.bindTexture(gl.TEXTURE_2D, targetTexture);
+
     renderToTexture(gl, createTextureVS, createTextureFS, targetTexture)
     renderTextureToCanvas(gl, drawTextureToScreenVS, drawTextureToScreenFS, targetTexture)
 }
 
 function renderToTexture(gl, createTextureVS, createTextureFS, targetTexture) {
-    console.log("renderToTexture")
     validateDefined({gl, createTextureVS, createTextureFS, targetTexture})
     var vertexShader = createShader(gl, gl.VERTEX_SHADER, createTextureVS);
     var fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, createTextureFS);
@@ -38,6 +51,7 @@ function renderToTexture(gl, createTextureVS, createTextureFS, targetTexture) {
     // TODO Share positions between the shader.
     var a_position_loc = gl.getAttribLocation(program, "a_position");
     var a_texcoord_loc = gl.getAttribLocation(program, "a_texcoord");
+    var u_input_texture = gl.getUniformLocation(program, "u_input_texture")
     validateLocation({a_position_loc, a_texcoord_loc})
 
     var vao = gl.createVertexArray();
@@ -50,11 +64,13 @@ function renderToTexture(gl, createTextureVS, createTextureFS, targetTexture) {
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.useProgram(program);
+
+    gl.uniform1i(u_input_texture, TEXTURE_ID_INPUT) // Use texture 1 as input texture. We use 0 is for output texture.
+
     gl.drawArrays(gl.TRIANGLES, 0, vertexCount)
 }
 
 function renderTextureToCanvas(gl, drawTextureToScreenVS, drawTextureToScreenFS, texture) {
-    console.log("renderTextureToCanvas")
     validateDefined({gl, drawTextureToScreenVS, drawTextureToScreenFS, texture})
     resizeCanvasToDisplaySize(gl.canvas);
 
@@ -75,7 +91,6 @@ function renderTextureToCanvas(gl, drawTextureToScreenVS, drawTextureToScreenFS,
     //initializeTextureValues(gl)
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);  // Render to the canvas.
-    gl.bindTexture(gl.TEXTURE_2D, texture);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); // gl.NEAREST_MIPMAP_LINEAR is default
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
@@ -134,6 +149,9 @@ function getGlContext(selector) {
 }
 
 
+/**
+ * Set 6 vertices so they form a rectangle covering whole viewport.
+ */
 function initFullSquareVertexPos(gl, a_position_loc) {
     validateDefined({gl, a_position_loc})
     var positionBuffer = gl.createBuffer();
@@ -173,17 +191,26 @@ function initFullSquareVertexPos(gl, a_position_loc) {
     return vertices.length / 2;
 }
 
-function initializeTexture(gl, a_texcoord_loc, textureNumber) {
-    gl.activeTexture(gl.TEXTURE0 + textureNumber);
-    initFullSquareTexturePos(gl, a_texcoord_loc)
-    initializeTextureValues(gl)
-}
+//function initializeTexture(gl, a_texcoord_loc, textureNumber) {
+//    gl.activeTexture(gl.TEXTURE0 + textureNumber);
+//    initFullSquareTexturePos(gl, a_texcoord_loc)
+//    initializeTextureValues(gl)
+//}
 
 function createOutputAndFrameBufferTexture(gl, targetTexture) {
-    validateDefined({gl, targetTexture})
-    const targetTextureWidth = 256;
-    const targetTextureHeight = 256;
-    gl.bindTexture(gl.TEXTURE_2D, targetTexture);
+    const width = 2
+    const height = 2
+    // console.log("createOutputTexture: outputTexture")
+    createOutputTexture(gl, targetTexture, width, height)
+    attachFramebuffer(gl, targetTexture, width, height)
+}
+
+/**
+ * data parameter is optional, if null then the data in the texture is undefined.
+ */
+function createOutputTexture(gl, texture, width, height, data) {
+    validateDefined({gl, texture, width, height})
+    assertEquals({width, height}, {width: 2, height: 2})
      
     // define size and format of level 0
     const level = 0;
@@ -191,23 +218,30 @@ function createOutputAndFrameBufferTexture(gl, targetTexture) {
     const border = 0;
     const format = gl.RGBA;
     const type = gl.UNSIGNED_BYTE;
-    const data = null;
+    if (data) {
+        data = new Uint8Array(data)
+    }
     gl.texImage2D(gl.TEXTURE_2D, level, internalFormat,
-                  targetTextureWidth, targetTextureHeight, border,
+                  width, height, border,
                   format, type, data);
    
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
+}
+
+function attachFramebuffer(gl, texture, width, height) {
     // Create and bind the framebuffer
     const fb = gl.createFramebuffer();
     gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
-    gl.viewport(0, 0, targetTextureWidth, targetTextureHeight);
+    gl.viewport(0, 0, width, height);
     // attach the texture as the first color attachment
     const attachmentPoint = gl.COLOR_ATTACHMENT0;
-    gl.framebufferTexture2D(gl.FRAMEBUFFER, attachmentPoint, gl.TEXTURE_2D, targetTexture, level);
+    const level = 0;
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, attachmentPoint, gl.TEXTURE_2D, texture, level);
 }
+
 
 function initFullSquareTexturePos(gl, a_texcoord_loc) {
     validateDefined({gl, a_texcoord_loc})
@@ -238,23 +272,23 @@ function initFullSquareTexturePos(gl, a_texcoord_loc) {
     });
 }
 
-function initializeTextureValues(gl) {
-    validateDefined({gl})
-    var texture = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, texture);
-    // TODO check larger texture
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 2, 2, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(
-        [
-            0, 0, 255, 255, // bottom-left
-            0, 0, 255, 255, // bottom-right
-            255, 0, 0, 255, // red top-left
-            0, 255, 0, 255, // green top-right
-        ]
-    ));
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); // gl.NEAREST_MIPMAP_LINEAR is default
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-}
+// function initializeTextureValues(gl) {
+//     validateDefined({gl})
+//     var texture = gl.createTexture();
+//     gl.bindTexture(gl.TEXTURE_2D, texture);
+//     // TODO check larger texture
+//     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 2, 2, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(
+//         [
+//             0, 0, 255, 255, // bottom-left
+//             0, 0, 255, 255, // bottom-right
+//             255, 0, 0, 255, // red top-left
+//             0, 255, 0, 255, // green top-right
+//         ]
+//     ));
+//     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); // gl.NEAREST_MIPMAP_LINEAR is default
+//     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+//     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+// }
 
 function gl_vertexAttribPointer(args) {
     const {gl, index, size, type, normalize, stride, offset} = args
@@ -283,12 +317,21 @@ function validateLocation(args) {
     }
 }
 
+function assertEquals(values, expected) {
+    for (const key of Object.keys(values)) {
+        const valueInput = values[key]
+        const valueExpected = expected[key]
+        if (valueInput !== valueExpected) {
+            console.error("For key " + key + " expected value " + valueExpected + " but got " + valueInput)
+        }
+    }
+}
+
 /**
  * Ensure that the canvas has the same number of pixels as displayed on the screen. This is no obvious
  * because you could have canvas that has logically 10x10 pixels displayed as 40x40 picture on screen.
  */
 function resizeCanvasToDisplaySize(canvas) {
-
     const displayWidth  = canvas.clientWidth;
     const displayHeight = canvas.clientHeight;
     // width - number of logical pixels
