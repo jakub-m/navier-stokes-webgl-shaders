@@ -47,6 +47,7 @@ function renderToTexture(gl, createTextureVS, createTextureFS, targetTexture) {
     var vertexShader = createShader(gl, gl.VERTEX_SHADER, createTextureVS);
     var fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, createTextureFS);
     var program = createProgram(gl, vertexShader, fragmentShader);
+    gl.useProgram(program);
 
     // TODO Share positions between the shader.
     var a_position_loc = gl.getAttribLocation(program, "a_position");
@@ -63,7 +64,6 @@ function renderToTexture(gl, createTextureVS, createTextureFS, targetTexture) {
 
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT);
-    gl.useProgram(program);
 
     gl.uniform1i(u_input_texture, TEXTURE_ID_INPUT) // Use texture 1 as input texture. We use 0 is for output texture.
 

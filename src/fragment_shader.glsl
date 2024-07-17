@@ -15,5 +15,5 @@ void main() {
   // Just set the output to a constant reddish-purple
   //outColor = u_color;
   // outColor = v_color;
-  outColor = texture(u_texture, v_texcoord);
+  outColor = texture2D(u_texture, v_texcoord);
 }
