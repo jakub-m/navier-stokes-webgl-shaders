@@ -10,10 +10,11 @@ out vec4 outColor;
 uniform vec4 u_color;
 
 uniform sampler2D u_texture;
+uniform sampler2D x;
  
 void main() {
   // Just set the output to a constant reddish-purple
   //outColor = u_color;
   // outColor = v_color;
-  outColor = texture2D(u_texture, v_texcoord);
+  outColor = texture2D(x, vec2(1,1));
 }

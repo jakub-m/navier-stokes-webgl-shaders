@@ -44,8 +44,8 @@ function render(args) {
 
 function renderToTexture(gl, createTextureVS, createTextureFS, targetTexture) {
     validateDefined({gl, createTextureVS, createTextureFS, targetTexture})
-    var vertexShader = createShader(gl, gl.VERTEX_SHADER, createTextureVS);
-    var fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, createTextureFS);
+    var vertexShader = createShader(gl, gl.VERTEX_SHADER, "createTextureVS", createTextureVS);
+    var fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, "createTextureFS", createTextureFS);
     var program = createProgram(gl, vertexShader, fragmentShader);
     gl.useProgram(program);
 
@@ -74,8 +74,8 @@ function renderTextureToCanvas(gl, drawTextureToScreenVS, drawTextureToScreenFS,
     validateDefined({gl, drawTextureToScreenVS, drawTextureToScreenFS, texture})
     resizeCanvasToDisplaySize(gl.canvas);
 
-    var vertexShader = createShader(gl, gl.VERTEX_SHADER, drawTextureToScreenVS);
-    var fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, drawTextureToScreenFS);
+    var vertexShader = createShader(gl, gl.VERTEX_SHADER, "drawTextureToScreenVS", drawTextureToScreenVS);
+    var fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, "drawTextureToScreenFS", drawTextureToScreenFS);
     var program = createProgram(gl, vertexShader, fragmentShader);
 
     var a_position_loc = gl.getAttribLocation(program, "a_position");
@@ -105,7 +105,7 @@ function renderTextureToCanvas(gl, drawTextureToScreenVS, drawTextureToScreenFS,
     gl.drawArrays(gl.TRIANGLES, 0, vertexCount)
 }
 
-function createShader(gl, type, source) {
+function createShader(gl, type, name, source) {
     var shader = gl.createShader(type);
     gl.shaderSource(shader, source);
     gl.compileShader(shader);
@@ -114,7 +114,7 @@ function createShader(gl, type, source) {
         return shader;
     }
    
-    console.error("createShader", gl.getShaderInfoLog(shader));
+    console.error("createShader " + name, gl.getShaderInfoLog(shader));
     gl.deleteShader(shader);
 }
 

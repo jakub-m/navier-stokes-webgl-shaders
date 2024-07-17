@@ -10,9 +10,9 @@ uniform sampler2D u_texture;
 out vec4 outColor;
 
 void main() {
-    // vec2 p = (v_position.xy + 1.0) / 2.0;
+    vec2 p = (v_position.xy + 1.0) / 2.0;
     // vec2 p = (v_texcoord.xy);
-    // float c = sqrt((p.x * p.x) + (p.y * p.y));
-    // outColor = vec4(c, c, c, 1);
-    outColor = texture(u_texture, v_texcoord);
+    float c = sqrt((p.x * p.x) + (p.y * p.y));
+    //outColor = vec4(c, c, c, 1);
+    float f = texture2D(u_texture, vec2(1,1));
 }
