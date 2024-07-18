@@ -1,5 +1,3 @@
-// NOW try to draw texture from another active unit
-
 const { color } = require("@mui/system");
 
 const canvasId = "#c"
@@ -23,13 +21,21 @@ function render(args) {
         custom,
     })
     const gl = getGlContext(canvasId)
-    const inputTexture = gl.createTexture()
-    const targetTexture = gl.createTexture();
 
+    const textureA = gl.createTexture();
+    gl.activeTexture(gl.TEXTURE0 + TEXTURE_ID_A);
+    gl.bindTexture(gl.TEXTURE_2D, textureA);
+    createOutputTexture(gl, textureA, 2, 2, [
+        0, 255,0,255,
+        0, 255,0,255,
+        0, 255,0,255,
+        0, 255,0,255,
+    ])
+
+    const textureB = gl.createTexture()
     gl.activeTexture(gl.TEXTURE0 + TEXTURE_ID_B);
-    gl.bindTexture(gl.TEXTURE_2D, inputTexture);
-    // console.log("createOutputTexture: inputTexture")
-    createOutputTexture(gl, inputTexture, 2, 2, [
+    gl.bindTexture(gl.TEXTURE_2D, textureB);
+    createOutputTexture(gl, textureB, 2, 2, [
         255, 0,0,255,
         255, 0,0,255,
         255, 0,0,255,
@@ -40,7 +46,7 @@ function render(args) {
     //gl.bindTexture(gl.TEXTURE_2D, targetTexture);
 
     //renderToTexture(gl, createTextureVS, createTextureFS, targetTexture)
-    renderTextureToCanvas(gl, drawTextureToScreenVS, drawTextureToScreenFS, inputTexture)
+    renderTextureToCanvas(gl, drawTextureToScreenVS, drawTextureToScreenFS, textureB)
 }
 
 function renderToTexture(gl, createTextureVS, createTextureFS, targetTexture) {
@@ -81,7 +87,8 @@ function renderTextureToCanvas(gl, drawTextureToScreenVS, drawTextureToScreenFS,
 
     var a_position_loc = gl.getAttribLocation(program, "a_position");
     var a_texcoord_loc = gl.getAttribLocation(program, "a_texcoord");
-    var u_texture_loc = gl.getUniformLocation(program, "u_texture");
+    var u_texture_a_loc = gl.getUniformLocation(program, "u_texture_a");
+    var u_texture_b_loc = gl.getUniformLocation(program, "u_texture_b");
     validateLocation({a_position_loc, a_texcoord_loc})
 
     var vao = gl.createVertexArray();
@@ -92,7 +99,8 @@ function renderTextureToCanvas(gl, drawTextureToScreenVS, drawTextureToScreenFS,
     initFullSquareTexturePos(gl, a_texcoord_loc)
     //initializeTextureValues(gl)
 
-    gl.uniform1i(u_texture_loc, TEXTURE_ID_B) // Use texture 1 as input texture. We use 0 is for output texture.
+    gl.uniform1i(u_texture_a_loc, TEXTURE_ID_A)
+    gl.uniform1i(u_texture_b_loc, TEXTURE_ID_B) 
     
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);  // Render to the canvas.
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); // gl.NEAREST_MIPMAP_LINEAR is default
