@@ -1,9 +1,11 @@
+// NOW try to draw texture from another active unit
+
 const { color } = require("@mui/system");
 
 const canvasId = "#c"
 
-const TEXTURE_ID_TARGET = 0
-const TEXTURE_ID_INPUT = 1
+const TEXTURE_ID_A = 0
+const TEXTURE_ID_B = 1
 
 function render(args) {
     const {
@@ -24,7 +26,7 @@ function render(args) {
     const inputTexture = gl.createTexture()
     const targetTexture = gl.createTexture();
 
-    gl.activeTexture(gl.TEXTURE0 + TEXTURE_ID_INPUT);
+    gl.activeTexture(gl.TEXTURE0 + TEXTURE_ID_B);
     gl.bindTexture(gl.TEXTURE_2D, inputTexture);
     // console.log("createOutputTexture: inputTexture")
     createOutputTexture(gl, inputTexture, 2, 2, [
@@ -32,14 +34,13 @@ function render(args) {
         255, 0,0,255,
         255, 0,0,255,
         255, 0,0,255,
-
     ])
 
-    gl.activeTexture(gl.TEXTURE0 + TEXTURE_ID_TARGET);
-    gl.bindTexture(gl.TEXTURE_2D, targetTexture);
+    //gl.activeTexture(gl.TEXTURE0 + TEXTURE_ID_A);
+    //gl.bindTexture(gl.TEXTURE_2D, targetTexture);
 
-    renderToTexture(gl, createTextureVS, createTextureFS, targetTexture)
-    renderTextureToCanvas(gl, drawTextureToScreenVS, drawTextureToScreenFS, targetTexture)
+    //renderToTexture(gl, createTextureVS, createTextureFS, targetTexture)
+    renderTextureToCanvas(gl, drawTextureToScreenVS, drawTextureToScreenFS, inputTexture)
 }
 
 function renderToTexture(gl, createTextureVS, createTextureFS, targetTexture) {
@@ -49,7 +50,6 @@ function renderToTexture(gl, createTextureVS, createTextureFS, targetTexture) {
     var program = createProgram(gl, vertexShader, fragmentShader);
     gl.useProgram(program);
 
-    // TODO Share positions between the shader.
     var a_position_loc = gl.getAttribLocation(program, "a_position");
     var a_texcoord_loc = gl.getAttribLocation(program, "a_texcoord");
     var u_input_texture = gl.getUniformLocation(program, "u_input_texture")
@@ -65,7 +65,7 @@ function renderToTexture(gl, createTextureVS, createTextureFS, targetTexture) {
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT);
 
-    gl.uniform1i(u_input_texture, TEXTURE_ID_INPUT) // Use texture 1 as input texture. We use 0 is for output texture.
+    gl.uniform1i(u_input_texture, TEXTURE_ID_B) // Use texture 1 as input texture. We use 0 is for output texture.
 
     gl.drawArrays(gl.TRIANGLES, 0, vertexCount)
 }
@@ -77,9 +77,11 @@ function renderTextureToCanvas(gl, drawTextureToScreenVS, drawTextureToScreenFS,
     var vertexShader = createShader(gl, gl.VERTEX_SHADER, "drawTextureToScreenVS", drawTextureToScreenVS);
     var fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, "drawTextureToScreenFS", drawTextureToScreenFS);
     var program = createProgram(gl, vertexShader, fragmentShader);
+    gl.useProgram(program);
 
     var a_position_loc = gl.getAttribLocation(program, "a_position");
     var a_texcoord_loc = gl.getAttribLocation(program, "a_texcoord");
+    var u_texture_loc = gl.getUniformLocation(program, "u_texture");
     validateLocation({a_position_loc, a_texcoord_loc})
 
     var vao = gl.createVertexArray();
@@ -90,6 +92,8 @@ function renderTextureToCanvas(gl, drawTextureToScreenVS, drawTextureToScreenFS,
     initFullSquareTexturePos(gl, a_texcoord_loc)
     //initializeTextureValues(gl)
 
+    gl.uniform1i(u_texture_loc, TEXTURE_ID_B) // Use texture 1 as input texture. We use 0 is for output texture.
+    
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);  // Render to the canvas.
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); // gl.NEAREST_MIPMAP_LINEAR is default
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
@@ -101,7 +105,6 @@ function renderTextureToCanvas(gl, drawTextureToScreenVS, drawTextureToScreenFS,
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT);
     // Tell it to use our program (pair of shaders)
-    gl.useProgram(program);
     gl.drawArrays(gl.TRIANGLES, 0, vertexCount)
 }
 
