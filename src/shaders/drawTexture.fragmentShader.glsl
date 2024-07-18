@@ -14,5 +14,6 @@ void main() {
     // vec2 p = (v_texcoord.xy);
     float c = sqrt((p.x * p.x) + (p.y * p.y));
     //outColor = vec4(c, c, c, 1);
-    float f = texture2D(u_texture, vec2(1,1));
+    //float f = texture(u_texture, vec2(1,1));
+    outColor = texture(u_texture, v_texcoord);
 }
