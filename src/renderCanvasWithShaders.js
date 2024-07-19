@@ -1,12 +1,12 @@
-const { color } = require("@mui/system");
-
-
-// Initialize texture A
-// Initialize texture B
 // Render texture A to texture B
 // Render texture B to texture A
 // display A
 // display B
+
+import drawTextureToScreenVS from './shaders/drawTexture.vertexShader.glsl'
+import drawTextureToScreenFS from './shaders/drawTexture.fragmentShader.glsl'
+import renderToTextureVS from './shaders/createTexture.vertexShader.glsl'
+import renderToTextureFS from './shaders/createTexture.fragmentShader.glsl'
 
 const canvasId = "#c"
 
@@ -15,17 +15,9 @@ const TEXTURE_ID_B = 1
 
 function render(args) {
     const {
-        drawTextureToScreenVS,
-        drawTextureToScreenFS,
-        createTextureVS,
-        createTextureFS,
         custom,
     } = args
     validateDefined({
-        drawTextureToScreenVS,
-        drawTextureToScreenFS,
-        createTextureVS,
-        createTextureFS,
         custom,
     })
     const gl = getGlContext(canvasId)
@@ -46,34 +38,36 @@ function render(args) {
         255, 0,0,255,
     ])
 
-    renderToTexture(gl, createTextureVS, createTextureFS, textureA.texture)
+    //renderToTexture(gl, renderToTextureVS, renderToTextureFS, textureA.texture)
+    var textureRenderer = new TextureRenderer({gl})
+    textureRenderer.renderToTexture(textureA)
+
     renderTextureToCanvas(gl, drawTextureToScreenVS, drawTextureToScreenFS)
-
 }
 
-function renderToTexture(gl, createTextureVS, createTextureFS, targetTexture) {
-    var program = createProgramFromSources(gl, createTextureVS, createTextureFS)
-    gl.useProgram(program);
-
-    var a_position_loc = gl.getAttribLocation(program, "a_position");
-    var a_texcoord_loc = gl.getAttribLocation(program, "a_texcoord");
-    var u_input_texture = gl.getUniformLocation(program, "u_input_texture")
-    validateLocation({a_position_loc, a_texcoord_loc})
-
-    var vao = gl.createVertexArray();
-    gl.bindVertexArray(vao);
-
-    initFullSquareTexturePos(gl, a_texcoord_loc)
-    const vertexCount = initFullSquareVertexPos(gl, a_position_loc)
-    createOutputAndFrameBufferTexture(gl, targetTexture, 2, 2);
-
-    gl.clearColor(0, 0, 0, 0);
-    gl.clear(gl.COLOR_BUFFER_BIT);
-
-    gl.uniform1i(u_input_texture, TEXTURE_ID_A) // Use texture 1 as input texture. We use 0 is for output texture.
-
-    gl.drawArrays(gl.TRIANGLES, 0, vertexCount)
-}
+//function renderToTexture(gl, renderToTextureVS, createTextureFS, targetTexture) {
+//    var program = createProgramFromSources(gl, renderToTextureVS, createTextureFS)
+//    gl.useProgram(program);
+//
+//    var a_position_loc = gl.getAttribLocation(program, "a_position");
+//    var a_texcoord_loc = gl.getAttribLocation(program, "a_texcoord");
+//    var u_input_texture = gl.getUniformLocation(program, "u_input_texture")
+//    validateLocation({a_position_loc, a_texcoord_loc})
+//
+//    var vao = gl.createVertexArray();
+//    gl.bindVertexArray(vao);
+//
+//    initFullSquareTexturePos(gl, a_texcoord_loc)
+//    const vertexCount = initFullSquareVertexPos(gl, a_position_loc)
+//    createOutputAndFrameBufferTexture(gl, targetTexture, 2, 2);
+//
+//    gl.clearColor(0, 0, 0, 0);
+//    gl.clear(gl.COLOR_BUFFER_BIT);
+//
+//    gl.uniform1i(u_input_texture, TEXTURE_ID_A) // Use texture 1 as input texture. We use 0 is for output texture.
+//
+//    gl.drawArrays(gl.TRIANGLES, 0, vertexCount)
+//}
 
 function renderTextureToCanvas(gl, drawTextureToScreenVS, drawTextureToScreenFS) {
     validateDefined({gl, drawTextureToScreenVS, drawTextureToScreenFS})
@@ -113,8 +107,6 @@ function renderTextureToCanvas(gl, drawTextureToScreenVS, drawTextureToScreenFS)
     gl.drawArrays(gl.TRIANGLES, 0, vertexCount)
 }
 
-
-
 function getGlContext(selector) {
     const canvas = document.querySelector(selector);
     if (canvas === null) {
@@ -144,6 +136,48 @@ class Texture {
     setValues(data) {
         initializeTexture(this.gl, this.texture, this.width, this.height, data)
     }
+}
+
+
+/**
+ * Render program to texture.
+ */
+class TextureRenderer {
+    constructor({gl}) {
+        validateDefined({gl})
+        this.gl = gl
+        this.program = createProgramFromSources(gl, renderToTextureVS, renderToTextureFS)
+    }
+
+    /**
+     * @param {Texture} target 
+     */
+    renderToTexture(target) {
+        var gl = this.gl
+        var program = this.program
+        gl.useProgram(program);
+
+        var a_position_loc = gl.getAttribLocation(program, "a_position");
+        var a_texcoord_loc = gl.getAttribLocation(program, "a_texcoord");
+        var u_input_texture = gl.getUniformLocation(program, "u_input_texture")
+        validateLocation({a_position_loc, a_texcoord_loc})
+
+        var vao = gl.createVertexArray();
+        gl.bindVertexArray(vao);
+
+        // TODO do it only once, if at all.
+        initFullSquareTexturePos(gl, a_texcoord_loc)
+        const vertexCount = initFullSquareVertexPos(gl, a_position_loc)
+        createOutputAndFrameBufferTexture(gl, target.texture, 2, 2);
+
+        gl.clearColor(0, 0, 0, 0);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+
+        gl.uniform1i(u_input_texture, target.texture_id)
+
+        gl.drawArrays(gl.TRIANGLES, 0, vertexCount)
+    }
+
 }
 
 
@@ -271,7 +305,7 @@ function initFullSquareTexturePos(gl, a_texcoord_loc) {
 
 // function initializeTextureValues(gl) {
 //     validateDefined({gl})
-//     var texture = gl.createTexture();
+//     var texture = gl.renderToTexture();
 //     gl.bindTexture(gl.TEXTURE_2D, texture);
 //     // TODO check larger texture
 //     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 2, 2, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(
@@ -380,5 +414,5 @@ function createProgram(gl, vertexShader, fragmentShader) {
 }
 
 
-
-module.exports.render = render
+//module.exports = {render}
+export {render}
