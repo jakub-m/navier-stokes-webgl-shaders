@@ -1,5 +1,13 @@
 const { color } = require("@mui/system");
 
+
+// Initialize texture A
+// Initialize texture B
+// Render texture A to texture B
+// Render texture B to texture A
+// display A
+// display B
+
 const canvasId = "#c"
 
 const TEXTURE_ID_A = 0
@@ -22,38 +30,29 @@ function render(args) {
     })
     const gl = getGlContext(canvasId)
 
-    const textureA = gl.createTexture();
-    gl.activeTexture(gl.TEXTURE0 + TEXTURE_ID_A);
-    gl.bindTexture(gl.TEXTURE_2D, textureA);
-    createOutputTexture(gl, textureA, 2, 2, [
+    const textureA = new Texture({gl, texture_id: TEXTURE_ID_A, height: 2, width:2})
+    textureA.setValues([
         0, 255,0,255,
         0, 255,0,255,
         0, 255,0,255,
         0, 255,0,255,
     ])
 
-    const textureB = gl.createTexture()
-    gl.activeTexture(gl.TEXTURE0 + TEXTURE_ID_B);
-    gl.bindTexture(gl.TEXTURE_2D, textureB);
-    createOutputTexture(gl, textureB, 2, 2, [
+    const textureB = new Texture({gl, texture_id: TEXTURE_ID_B, height: 2, width: 2})
+    textureB.setValues([
         255, 0,0,255,
         255, 0,0,255,
         255, 0,0,255,
         255, 0,0,255,
     ])
 
-    //gl.activeTexture(gl.TEXTURE0 + TEXTURE_ID_A);
-    //gl.bindTexture(gl.TEXTURE_2D, targetTexture);
+    renderToTexture(gl, createTextureVS, createTextureFS, textureA.texture)
+    renderTextureToCanvas(gl, drawTextureToScreenVS, drawTextureToScreenFS)
 
-    //renderToTexture(gl, createTextureVS, createTextureFS, targetTexture)
-    renderTextureToCanvas(gl, drawTextureToScreenVS, drawTextureToScreenFS, textureB)
 }
 
 function renderToTexture(gl, createTextureVS, createTextureFS, targetTexture) {
-    validateDefined({gl, createTextureVS, createTextureFS, targetTexture})
-    var vertexShader = createShader(gl, gl.VERTEX_SHADER, "createTextureVS", createTextureVS);
-    var fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, "createTextureFS", createTextureFS);
-    var program = createProgram(gl, vertexShader, fragmentShader);
+    var program = createProgramFromSources(gl, createTextureVS, createTextureFS)
     gl.useProgram(program);
 
     var a_position_loc = gl.getAttribLocation(program, "a_position");
@@ -66,23 +65,21 @@ function renderToTexture(gl, createTextureVS, createTextureFS, targetTexture) {
 
     initFullSquareTexturePos(gl, a_texcoord_loc)
     const vertexCount = initFullSquareVertexPos(gl, a_position_loc)
-    createOutputAndFrameBufferTexture(gl, targetTexture);
+    createOutputAndFrameBufferTexture(gl, targetTexture, 2, 2);
 
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT);
 
-    gl.uniform1i(u_input_texture, TEXTURE_ID_B) // Use texture 1 as input texture. We use 0 is for output texture.
+    gl.uniform1i(u_input_texture, TEXTURE_ID_A) // Use texture 1 as input texture. We use 0 is for output texture.
 
     gl.drawArrays(gl.TRIANGLES, 0, vertexCount)
 }
 
-function renderTextureToCanvas(gl, drawTextureToScreenVS, drawTextureToScreenFS, texture) {
-    validateDefined({gl, drawTextureToScreenVS, drawTextureToScreenFS, texture})
+function renderTextureToCanvas(gl, drawTextureToScreenVS, drawTextureToScreenFS) {
+    validateDefined({gl, drawTextureToScreenVS, drawTextureToScreenFS})
     resizeCanvasToDisplaySize(gl.canvas);
 
-    var vertexShader = createShader(gl, gl.VERTEX_SHADER, "drawTextureToScreenVS", drawTextureToScreenVS);
-    var fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, "drawTextureToScreenFS", drawTextureToScreenFS);
-    var program = createProgram(gl, vertexShader, fragmentShader);
+    var program = createProgramFromSources(gl, drawTextureToScreenVS, drawTextureToScreenFS)
     gl.useProgram(program);
 
     var a_position_loc = gl.getAttribLocation(program, "a_position");
@@ -116,33 +113,6 @@ function renderTextureToCanvas(gl, drawTextureToScreenVS, drawTextureToScreenFS,
     gl.drawArrays(gl.TRIANGLES, 0, vertexCount)
 }
 
-function createShader(gl, type, name, source) {
-    var shader = gl.createShader(type);
-    gl.shaderSource(shader, source);
-    gl.compileShader(shader);
-    var success = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
-    if (success) {
-        return shader;
-    }
-   
-    console.error("createShader " + name, gl.getShaderInfoLog(shader));
-    gl.deleteShader(shader);
-}
-
-
-function createProgram(gl, vertexShader, fragmentShader) {
-    var program = gl.createProgram();
-    gl.attachShader(program, vertexShader);
-    gl.attachShader(program, fragmentShader);
-    gl.linkProgram(program);
-    var success = gl.getProgramParameter(program, gl.LINK_STATUS);
-    if (success) {
-        return program;
-    }
-  
-    console.error("createProgram", gl.getProgramInfoLog(program));
-    gl.deleteProgram(program);
-}
 
 
 function getGlContext(selector) {
@@ -157,6 +127,23 @@ function getGlContext(selector) {
         return
     }
     return gl
+}
+
+class Texture {
+    constructor({gl, texture_id, width, height}) {
+        this.gl = gl
+        this.texture = gl.createTexture();
+        this.texture_id = texture_id
+        this.height = height
+        this.width = width
+        gl.activeTexture(gl.TEXTURE0 + texture_id);
+        gl.bindTexture(gl.TEXTURE_2D, this.texture);
+        initializeTexture(gl, this.texture, this.width, this.height)
+    }
+
+    setValues(data) {
+        initializeTexture(this.gl, this.texture, this.width, this.height, data)
+    }
 }
 
 
@@ -208,18 +195,17 @@ function initFullSquareVertexPos(gl, a_position_loc) {
 //    initializeTextureValues(gl)
 //}
 
-function createOutputAndFrameBufferTexture(gl, targetTexture) {
-    const width = 2
-    const height = 2
+function createOutputAndFrameBufferTexture(gl, targetTexture, width, height) {
+    validateDefined({gl, targetTexture, width, height})
     // console.log("createOutputTexture: outputTexture")
-    createOutputTexture(gl, targetTexture, width, height)
+    // initializeTexture(gl, targetTexture, width, height)
     attachFramebuffer(gl, targetTexture, width, height)
 }
 
 /**
  * data parameter is optional, if null then the data in the texture is undefined.
  */
-function createOutputTexture(gl, texture, width, height, data) {
+function initializeTexture(gl, texture, width, height, data) {
     validateDefined({gl, texture, width, height})
     assertEquals({width, height}, {width: 2, height: 2})
      
@@ -358,5 +344,41 @@ function resizeCanvasToDisplaySize(canvas) {
     }
     return needResize;
   }
+
+function createProgramFromSources(gl, vertexShaderSource, fragmentShaderSource) {
+    validateDefined({gl, vertexShaderSource, fragmentShaderSource})
+    var vertexShader = createShader(gl, gl.VERTEX_SHADER, "vertex shader", vertexShaderSource);
+    var fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, "fragment shader", fragmentShaderSource);
+    return createProgram(gl, vertexShader, fragmentShader);
+}
+
+function createShader(gl, type, name, source) {
+    var shader = gl.createShader(type);
+    gl.shaderSource(shader, source);
+    gl.compileShader(shader);
+    var success = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
+    if (success) {
+        return shader;
+    }
+   
+    console.error("createShader " + name, gl.getShaderInfoLog(shader));
+    gl.deleteShader(shader);
+}
+
+function createProgram(gl, vertexShader, fragmentShader) {
+    var program = gl.createProgram();
+    gl.attachShader(program, vertexShader);
+    gl.attachShader(program, fragmentShader);
+    gl.linkProgram(program);
+    var success = gl.getProgramParameter(program, gl.LINK_STATUS);
+    if (success) {
+        return program;
+    }
+  
+    console.error("createProgram", gl.getProgramInfoLog(program));
+    gl.deleteProgram(program);
+}
+
+
 
 module.exports.render = render
