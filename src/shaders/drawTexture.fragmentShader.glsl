@@ -32,5 +32,6 @@ void main() {
     //    out_color = vec4(1,0,0,1); // r
     //}
 
-    out_color = min(tval_a, tval_b);
+    //out_color = min(tval_a, tval_b);
+    out_color = vec4( tval_a.r, tval_b.r, 0.0, 1.0);
 }

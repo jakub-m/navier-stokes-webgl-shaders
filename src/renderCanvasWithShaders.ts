@@ -31,7 +31,7 @@ function render(args: { [key: string]: any }) {
     width: 2,
     type: "float",
   });
-  textureA.setValues([1, 1, 1, 0]);
+  textureA.setValues([0.5, 0.5, 0.5, 0]);
 
   const textureB = new Texture({
     gl,
@@ -40,10 +40,10 @@ function render(args: { [key: string]: any }) {
     width: 2,
     type: "float",
   });
-  textureB.setValues([0, 1, 1, 1]);
+  textureB.setValues([0, 0.5, 0.5, 0.5]);
 
-  //var textureRenderer = new TextureRenderer(gl);
-  //textureRenderer.renderToTexture({ input: textureB, output: textureA });
+  var textureRenderer = new TextureRenderer(gl);
+  textureRenderer.renderToTexture({ input: textureA, output: textureB });
 
   var canvasRenderer = new CanvasRenderer(gl);
   canvasRenderer.render(textureA, textureB);
