@@ -1,7 +1,8 @@
 import React from "react";
 import { useEffect } from "react";
 
-const renderCanvasWithShaders = require('./renderCanvasWithShaders')
+//const renderCanvasWithShaders = require('./renderCanvasWithShaders')
+import {render} from './renderCanvasWithShaders'
 
 
 export interface ShaderProps {
@@ -10,7 +11,7 @@ export interface ShaderProps {
 
 export const Shader = ({custom}: ShaderProps) => {
   useEffect(() => {
-    renderCanvasWithShaders.render({
+    render({
         //drawTextureToScreenVS: drawTextureVS,
         //drawTextureToScreenFS: drawTextureFS,
         //createTextureVS,
