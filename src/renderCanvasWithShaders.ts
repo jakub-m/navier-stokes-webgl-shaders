@@ -7,6 +7,7 @@ import drawTextureToScreenVS from "./shaders/drawTexture.vertexShader.glsl";
 import drawTextureToScreenFS from "./shaders/drawTexture.fragmentShader.glsl";
 import renderToTextureVS from "./shaders/renderToTexture.vertexShader.glsl";
 import renderToTextureFS from "./shaders/renderToTexture.fragmentShader.glsl";
+import { unstable_renderSubtreeIntoContainer } from "react-dom";
 
 type GL = WebGL2RenderingContext;
 
@@ -21,33 +22,61 @@ function render(args: { [key: string]: any }) {
     custom,
   });
   const gl = getGlContext(canvasId);
-
+  enableExtension(gl, "EXT_color_buffer_float");
+  // gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
   const textureA = new Texture({
     gl,
     texture_id: TEXTURE_ID_A,
     height: 2,
     width: 2,
+    type: "rgba",
   });
   textureA.setValues([
-    0, 255, 0, 255, 0, 255, 0, 255, 0, 255, 0, 255, 0, 255, 0, 255,
+    255, 255, 255, 255, 0, 255, 255, 255, 255, 0, 255, 255, 255, 255, 0, 255,
   ]);
 
-  const textureB = new Texture({
-    gl,
-    texture_id: TEXTURE_ID_B,
-    height: 2,
-    width: 2,
-  });
-  textureB.setValues([
-    255, 0, 0, 255, 255, 0, 0, 255, 255, 0, 0, 255, 255, 0, 0, 255,
-  ]);
+  //const textureB = new Texture({
+  //  gl,
+  //  texture_id: TEXTURE_ID_B,
+  //  height: 2,
+  //  width: 2,
+  //});
+  //textureB.setValues([
+  //  //0, 255, 255, 255, 0, 0,
+  //  255, 0, 0, 255, 255, 0, 0, 255, 255, 0, 0, 255, 255, 0, 0, 255, 1, 1, 1, 1,
+  //  255, 0, 0, 255, 255, 0, 0, 255, 255, 0, 0, 255, 255, 0, 0, 255, 1, 1, 1, 1,
+  //  255, 0, 0, 255, 255, 0, 0, 255, 255, 0, 0, 255, 255, 0, 0, 255, 1, 1, 1, 1,
+  //  255, 0, 0, 255, 255, 0, 0, 255, 255, 0, 0, 255, 255, 0, 0, 255, 1, 1, 1, 1,
+  //  255, 0, 0, 255, 255, 0, 0, 255, 255, 0, 0, 255, 255, 0, 0, 255, 1, 1, 1, 1,
+  //  255, 0, 0, 255, 255, 0, 0, 255, 255, 0, 0, 255, 255, 0, 0, 255, 1, 1, 1, 1,
+  //  1, 1, 1, 1, 1, 1, 1, 1, 1,
+  //]);
 
-  var textureRenderer = new TextureRenderer(gl);
-  textureRenderer.renderToTexture({ input: textureB, output: textureA });
+  //var textureRenderer = new TextureRenderer(gl);
+  //textureRenderer.renderToTexture({ input: textureB, output: textureA });
 
   var canvasRenderer = new CanvasRenderer(gl);
-  canvasRenderer.render(textureA, textureB);
+  canvasRenderer.render(textureA);
 }
+
+const enableExtension = (gl: GL, name: string) => {
+  const ext = gl.getExtension(name);
+  if (!ext) {
+    const version = gl.getParameter(gl.VERSION);
+    const lang = gl.getParameter(gl.SHADING_LANGUAGE_VERSION);
+    throw Error(
+      name +
+        " extension not available. \n" +
+        "GL version: " +
+        version +
+        ". GLSL version: " +
+        lang +
+        "\n" +
+        "The supported extensions are:\n" +
+        gl.getSupportedExtensions()?.join("\n")
+    );
+  }
+};
 
 class CanvasRenderer {
   gl: GL;
@@ -62,7 +91,7 @@ class CanvasRenderer {
     );
   }
 
-  render(texture_a: Texture, texture_b: Texture) {
+  render(textureA?: Texture, textureB?: Texture) {
     var gl = this.gl;
     var program = this.program;
     gl.useProgram(program);
@@ -80,13 +109,23 @@ class CanvasRenderer {
     const vertexCount = initFullSquareVertexPos(gl, a_position_loc);
     initFullSquareTexturePos(gl, a_texcoord_loc);
 
-    gl.uniform1i(u_texture_a_loc, texture_a.texture_id);
-    gl.uniform1i(u_texture_b_loc, texture_b.texture_id);
+    var hasTexture = false;
+    if (textureA !== undefined) {
+      gl.uniform1i(u_texture_a_loc, textureA.texture_id);
+      hasTexture = true;
+    }
+    if (textureB !== undefined) {
+      gl.uniform1i(u_texture_b_loc, textureB.texture_id);
+      hasTexture = true;
+    }
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, null); // Render to the canvas.
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); // gl.NEAREST_MIPMAP_LINEAR is default
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+    if (hasTexture) {
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST); // gl.NEAREST_MIPMAP_LINEAR is default
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    }
 
     // Tell WebGL how to convert from clip space to pixels
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
@@ -114,6 +153,7 @@ interface TextureProps {
   texture_id: GLint;
   width: number;
   height: number;
+  type: "float" | "rgba";
 }
 
 class Texture {
@@ -122,20 +162,22 @@ class Texture {
   texture_id: GLint;
   width: number;
   height: number;
+  textureType: "float" | "rgba";
 
-  constructor({ gl, texture_id, width, height }: TextureProps) {
+  constructor({ gl, texture_id, width, height, type = "rgba" }: TextureProps) {
     this.gl = gl;
     this.texture = gl_createTexture(gl);
     this.texture_id = texture_id;
     this.width = width;
     this.height = height;
+    this.textureType = type;
     gl.activeTexture(gl.TEXTURE0 + texture_id);
     gl.bindTexture(gl.TEXTURE_2D, this.texture);
-    initializeTexture(gl, this.width, this.height);
+    initializeTexture(gl, this.width, this.height, this.textureType);
   }
 
   setValues(data: any) {
-    initializeTexture(this.gl, this.width, this.height, data);
+    initializeTexture(this.gl, this.width, this.height, this.textureType, data);
   }
 }
 
@@ -228,22 +270,7 @@ function initFullSquareVertexPos(gl: GL, a_position_loc: GLint) {
 
   // -w, h  | w, h
   // -w, -h | w, -h
-  const vertices = [
-    // ccw
-    -w,
-    -h,
-    w,
-    h,
-    -w,
-    h,
-    //
-    -w,
-    -h,
-    w,
-    -h,
-    w,
-    h,
-  ];
+  const vertices = [-w, -h, w, h, -w, h, -w, -h, w, -h, w, h];
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
 
   return vertices.length / 2;
@@ -252,19 +279,42 @@ function initFullSquareVertexPos(gl: GL, a_position_loc: GLint) {
 /**
  * data parameter is optional, if null then the data in the texture is undefined.
  */
-function initializeTexture(gl: GL, width: number, height: number, data?: any) {
+function initializeTexture(
+  gl: GL,
+  width: number,
+  height: number,
+  textureType: "rgba" | "float",
+  data?: any
+) {
   // TODO here activate!
   validateDefined({ gl, width, height });
   assertEquals({ width, height }, { width: 2, height: 2 });
 
   // define size and format of level 0
   const level = 0;
-  const internalFormat = gl.RGBA;
   const border = 0;
-  const format = gl.RGBA;
-  const type = gl.UNSIGNED_BYTE;
-  if (data) {
-    data = new Uint8Array(data);
+
+  var type = null;
+  var format = null;
+  var internalFormat = null;
+  var dataArray = null;
+
+  if (textureType === "rgba") {
+    type = gl.UNSIGNED_BYTE;
+    format = gl.RGBA;
+    internalFormat = gl.RGBA;
+    if (data !== undefined) {
+      dataArray = new Uint8Array(data);
+    }
+  } else if (textureType === "float") {
+    type = gl.FLOAT;
+    format = gl.RED;
+    internalFormat = gl.R32F;
+    if (data !== undefined) {
+      dataArray = new Float32Array(data);
+    }
+  } else {
+    throw Error(`Bad texture type: ${textureType}`);
   }
   gl.texImage2D(
     gl.TEXTURE_2D,
@@ -275,7 +325,7 @@ function initializeTexture(gl: GL, width: number, height: number, data?: any) {
     border,
     format,
     type,
-    data
+    dataArray
   );
 
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);

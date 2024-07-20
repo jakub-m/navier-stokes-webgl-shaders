@@ -38,6 +38,7 @@
 ## WebGL, GPU
 
 - [WebGL2 Fundamentals: GPGPU](https://webgl2fundamentals.org/webgl/lessons/webgl-gpgpu.html)
+- [WebGL2 3D - Data Textures](https://webgl2fundamentals.org/webgl/lessons/webgl-data-textures.html)
 - [Book of shaders](https://thebookofshaders.com/)
 - [SO: How to keep coordination between particles and which texture pixel contains each one’s information?](https://stackoverflow.com/questions/56780278/how-to-keep-coordination-between-particles-and-which-texture-pixel-contains-each/)
 - [SO: Updating buffers from within shaders in webgl](https://stackoverflow.com/questions/62744516/updating-buffers-from-within-shaders-in-webgl)
