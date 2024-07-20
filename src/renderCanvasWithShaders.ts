@@ -7,7 +7,6 @@ import drawTextureToScreenVS from "./shaders/drawTexture.vertexShader.glsl";
 import drawTextureToScreenFS from "./shaders/drawTexture.fragmentShader.glsl";
 import renderToTextureVS from "./shaders/renderToTexture.vertexShader.glsl";
 import renderToTextureFS from "./shaders/renderToTexture.fragmentShader.glsl";
-import { unstable_renderSubtreeIntoContainer } from "react-dom";
 
 type GL = WebGL2RenderingContext;
 
@@ -22,41 +21,32 @@ function render(args: { [key: string]: any }) {
     custom,
   });
   const gl = getGlContext(canvasId);
-  enableExtension(gl, "EXT_color_buffer_float");
+  enableExtension(gl, "OES_texture_float_linear"); // Allows rendering float texture (event with gl.NEAREST).
+  enableExtension(gl, "EXT_color_buffer_float"); // Allows rendering to float texture.
   // gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
   const textureA = new Texture({
     gl,
     texture_id: TEXTURE_ID_A,
     height: 2,
     width: 2,
-    type: "rgba",
+    type: "float",
   });
-  textureA.setValues([
-    255, 255, 255, 255, 0, 255, 255, 255, 255, 0, 255, 255, 255, 255, 0, 255,
-  ]);
+  textureA.setValues([1, 1, 1, 0]);
 
-  //const textureB = new Texture({
-  //  gl,
-  //  texture_id: TEXTURE_ID_B,
-  //  height: 2,
-  //  width: 2,
-  //});
-  //textureB.setValues([
-  //  //0, 255, 255, 255, 0, 0,
-  //  255, 0, 0, 255, 255, 0, 0, 255, 255, 0, 0, 255, 255, 0, 0, 255, 1, 1, 1, 1,
-  //  255, 0, 0, 255, 255, 0, 0, 255, 255, 0, 0, 255, 255, 0, 0, 255, 1, 1, 1, 1,
-  //  255, 0, 0, 255, 255, 0, 0, 255, 255, 0, 0, 255, 255, 0, 0, 255, 1, 1, 1, 1,
-  //  255, 0, 0, 255, 255, 0, 0, 255, 255, 0, 0, 255, 255, 0, 0, 255, 1, 1, 1, 1,
-  //  255, 0, 0, 255, 255, 0, 0, 255, 255, 0, 0, 255, 255, 0, 0, 255, 1, 1, 1, 1,
-  //  255, 0, 0, 255, 255, 0, 0, 255, 255, 0, 0, 255, 255, 0, 0, 255, 1, 1, 1, 1,
-  //  1, 1, 1, 1, 1, 1, 1, 1, 1,
-  //]);
+  const textureB = new Texture({
+    gl,
+    texture_id: TEXTURE_ID_B,
+    height: 2,
+    width: 2,
+    type: "float",
+  });
+  textureB.setValues([0, 1, 1, 1]);
 
   //var textureRenderer = new TextureRenderer(gl);
   //textureRenderer.renderToTexture({ input: textureB, output: textureA });
 
   var canvasRenderer = new CanvasRenderer(gl);
-  canvasRenderer.render(textureA);
+  canvasRenderer.render(textureA, textureB);
 }
 
 const enableExtension = (gl: GL, name: string) => {

@@ -15,6 +15,7 @@ void main() {
     //vec2 p = (v_texcoord.xy);
     //float c = sqrt((p.x * p.x) + (p.y * p.y));
     vec4 tval_a = texture(u_texture_a, v_texcoord);
+    vec4 tval_b = texture(u_texture_b, v_texcoord);
     //vec4 color_b = texture(u_texture_b, v_texcoord);
 
     //if (v_position.x < 0.0) {
@@ -31,5 +32,5 @@ void main() {
     //    out_color = vec4(1,0,0,1); // r
     //}
 
-    out_color = tval_a;
+    out_color = min(tval_a, tval_b);
 }
