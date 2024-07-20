@@ -43,7 +43,7 @@ function render(args: { [key: string]: any }) {
   ]);
 
   var textureRenderer = new TextureRenderer(gl);
-  textureRenderer.renderToTexture(textureA);
+  textureRenderer.renderToTexture({ input: textureB, output: textureA });
 
   var canvasRenderer = new CanvasRenderer(gl);
   canvasRenderer.render(textureA, textureB);
@@ -156,7 +156,7 @@ class TextureRenderer {
     );
   }
 
-  renderToTexture(target: Texture) {
+  renderToTexture({ input, output }: { input?: Texture; output: Texture }) {
     var gl = this.gl;
     var program = this.program;
     gl.useProgram(program);
@@ -173,11 +173,14 @@ class TextureRenderer {
     initFullSquareTexturePos(gl, a_texcoord_loc);
     const vertexCount = initFullSquareVertexPos(gl, a_position_loc);
     // TODO do I need to create frame buffer each time, or only once?
-    this._attachFramebuffer(gl, target.texture, target.width, target.height);
+    this._attachFramebuffer(gl, output.texture, output.width, output.height);
 
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT);
-    gl.uniform1i(u_input_texture, target.texture_id);
+    if (input !== undefined) {
+      gl.uniform1i(u_input_texture, input.texture_id);
+    }
+
     gl.drawArrays(gl.TRIANGLES, 0, vertexCount);
   }
 
