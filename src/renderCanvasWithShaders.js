@@ -5,8 +5,8 @@
 
 import drawTextureToScreenVS from './shaders/drawTexture.vertexShader.glsl'
 import drawTextureToScreenFS from './shaders/drawTexture.fragmentShader.glsl'
-import renderToTextureVS from './shaders/createTexture.vertexShader.glsl'
-import renderToTextureFS from './shaders/createTexture.fragmentShader.glsl'
+import renderToTextureVS from './shaders/renderToTexture.vertexShader.glsl'
+import renderToTextureFS from './shaders/renderToTexture.fragmentShader.glsl'
 
 const canvasId = "#c"
 
