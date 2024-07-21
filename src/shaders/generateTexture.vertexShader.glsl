@@ -6,10 +6,10 @@ in vec4 a_position;
 in vec2 a_texcoord;
 
 out vec4 v_position;
-out vec2 v_texcoord;
+out vec2 v_input_texture_coord;
 
 void main() {
   gl_Position = a_position;
   v_position = a_position;
-  v_texcoord = a_texcoord;
+  v_input_texture_coord = a_texcoord;
 }
