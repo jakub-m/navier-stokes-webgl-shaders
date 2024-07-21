@@ -10,45 +10,12 @@ import renderToTextureFS from "./shaders/renderToTexture.fragmentShader.glsl";
 
 export type GL = WebGL2RenderingContext;
 
-const canvasId = "#c";
-
-const TEXTURE_ID_A = 0;
-const TEXTURE_ID_B = 1;
-
-export const initializeGl = (): GL => {
-  const gl = getGlContext(canvasId);
+export const initializeGl = (selector: string): GL => {
+  const gl = getGlContext(selector);
   enableExtension(gl, "OES_texture_float_linear"); // Allows rendering float texture, need also for gl.NEAREST.
   enableExtension(gl, "EXT_color_buffer_float"); // Allows rendering to float texture.
   return gl;
 };
-
-function render() {
-  const gl = initializeGl();
-  // gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
-  const textureA = new Texture({
-    gl,
-    texture_id: TEXTURE_ID_A,
-    height: 2,
-    width: 2,
-    type: "float",
-  });
-  textureA.setValues([0.5, 0.5, 0.5, 0]);
-
-  const textureB = new Texture({
-    gl,
-    texture_id: TEXTURE_ID_B,
-    height: 2,
-    width: 2,
-    type: "float",
-  });
-  textureB.setValues([0, 0.5, 0.5, 0.5]);
-
-  var textureRenderer = new TextureRenderer(gl);
-  textureRenderer.renderToTexture({ input: textureA, output: textureB });
-
-  var canvasRenderer = new CanvasRenderer(gl);
-  canvasRenderer.render(textureA, textureB);
-}
 
 export class CanvasRenderer {
   gl: GL;
@@ -496,5 +463,3 @@ const enableExtension = (gl: GL, name: string) => {
     );
   }
 };
-
-export { render };
