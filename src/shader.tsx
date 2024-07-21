@@ -17,6 +17,8 @@ export const Shader = ({custom}: ShaderProps) => {
   const requestAnimationFrameRef = useRef<number>()
   const prevTimeRef = useRef(0)
   const renderingContextRef = useRef<RenderingContext>()
+  const fpsRef = useRef(0)
+  const pausePlayButtonRef = useRef("play")
 
   useEffect(() => {
     // Initialize GL context once.
@@ -24,14 +26,13 @@ export const Shader = ({custom}: ShaderProps) => {
     renderingContextRef.current = c
   });
 
-  const animate = useCallback((time: number) => {
-    // `time` is in ms
+  const animate = useCallback((timeMs: number) => {
     var deltaMs = 0;
     if (prevTimeRef.current !== 0) {
-      deltaMs = time - prevTimeRef.current
+      deltaMs = timeMs - prevTimeRef.current
     }
-    prevTimeRef.current = time
-    console.log(1000/deltaMs + " fps");
+    prevTimeRef.current = timeMs
+    fpsRef.current = 1000/deltaMs
     render(renderingContextRef.current)
     requestAnimationFrameRef.current = requestAnimationFrame(animate);
   }, [])
@@ -51,15 +52,38 @@ export const Shader = ({custom}: ShaderProps) => {
     };
   }, [animate, run, custom]);
 
- const pausePlayButton = (run) ? "stop" : "play";
- const handleClickPlay = () => {
-  setRun(r => !r)
- }
- return (
-  <>
-    <canvas id="c"></canvas>
-    <div onClick={handleClickPlay}>{pausePlayButton}</div>
-  </>)
+  useEffect(() => {
+    console.log("run? ", run)
+    if (!run) {
+      return
+    }
+
+    console.log("set interval")
+    const interval = setInterval(() => {
+      pausePlayButtonRef.current = `stop | ${Math.round(fpsRef.current)} fps`
+      console.log(pausePlayButtonRef.current)
+    }, 500)
+    return () => {
+      clearInterval(interval)
+    }
+  }, [run])
+
+  const handleClickPlay = () => {
+    if (run) {
+      // Now stop.
+      pausePlayButtonRef.current = "play"
+      setRun(false)
+    } else {
+      // Now run.
+      pausePlayButtonRef.current = "stop"
+      setRun(true)
+    }
+  }
+  return (
+    <>
+      <canvas id="c"></canvas>
+      <div onClick={handleClickPlay}>{pausePlayButtonRef.current}</div>
+    </>)
 };
 
 interface RenderingContext  {
