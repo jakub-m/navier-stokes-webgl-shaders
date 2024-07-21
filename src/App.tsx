@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useMemo, useRef, useState} from 'react';
 import './App.css';
 import { Shader } from './Shader';
 import { Slider } from '@mui/material';
@@ -10,6 +10,12 @@ function App() {
   //foo.foo()
   //return (<div>foo</div>)
   const [offset, setOffset] = useState({x: 0, y: 0})
+  const [fps, setFps] = useState(0)
+
+
+  const shader = useMemo(() => (
+    <Shader setFps={setFps}/>
+  ), [setFps])
 
   return (
     <div style={{marginLeft: "3em"}}>
@@ -42,7 +48,8 @@ function App() {
           }}
         />
       </div>
-      <Shader />
+      {shader}
+      <div>{Math.round(fps)} fps</div>
     </div>
   );
 }

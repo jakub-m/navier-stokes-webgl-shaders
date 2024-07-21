@@ -44,14 +44,12 @@ void main() {
     float v3 = getInputTextureValAbs(p - vec2( 0, 1));
     float v4 = getInputTextureValAbs(p - vec2( 0,-1));
     float v = 0.0;
-    if (v0 + v1 + v2 + v3 + v4  == 5.0) {
-        v = 0.0;
-    } else {
-        v = max(max(max(v0 , v1),max(v2, v3)), v4);
-    }
-
-    //float v = getInputTextureValAbs(p - vec2(1,1));
-
+    //if (v0 + v1 + v2 + v3 + v4  == 5.0) {
+    //    v = 0.0;
+    //} else {
+    //    v = max(max(max(v0 , v1),max(v2, v3)), v4);
+    //}
+    v = max(max(max(v0 , v1),max(v2, v3)), v4);
     setOutput(v);
 }
 

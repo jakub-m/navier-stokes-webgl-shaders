@@ -1,4 +1,4 @@
-import React from "react";
+import React, { MutableRefObject, useMemo } from "react";
 import { useEffect, useState, useRef, useCallback } from "react";
 
 import {GL, initializeGl, Texture, TextureRenderer, CanvasRenderer} from './webGlUtil'
@@ -8,12 +8,17 @@ const canvasId = "#c";
 const TEXTURE_ID_A = 0;
 const TEXTURE_ID_B = 1;
 
-export const Shader = () => {
+
+export interface ShaderProps {
+  setFps?: (fps: number) => void
+}
+
+
+export const Shader = ({setFps}: ShaderProps) => {
   const [run, setRun] = useState(false);
   const requestAnimationFrameRef = useRef<number>()
   const prevTimeRef = useRef(0)
   const renderingContextRef = useRef<RenderingContext>()
-  const fpsRef = useRef(0)
   const [pausePlayButton, setPausePlayButton] = useState("play")
 
   useEffect(() => {
@@ -28,10 +33,12 @@ export const Shader = () => {
       deltaMs = timeMs - prevTimeRef.current
     }
     prevTimeRef.current = timeMs
-    fpsRef.current = 1000/deltaMs
+    if (setFps) {
+      setFps(1000/deltaMs)
+    }
     renderingContextRef.current = render(renderingContextRef.current, deltaMs)
     requestAnimationFrameRef.current = requestAnimationFrame(animate);
-  }, [])
+  }, [setFps])
 
   useEffect(() => {
     // Render GL based on the context set once.
@@ -48,19 +55,6 @@ export const Shader = () => {
     };
   }, [animate, run]);
 
-  useEffect(() => {
-    if (!run) {
-      return
-    }
-
-    const interval = setInterval(() => {
-      setPausePlayButton(`stop | ${Math.round(fpsRef.current)} fps`)
-    }, 500)
-    return () => {
-      clearInterval(interval)
-    }
-  }, [run])
-
   const handleClickPlay = () => {
     if (run) {
       // Now stop.
@@ -74,13 +68,13 @@ export const Shader = () => {
   }
 
   const handleClickStep = () => {
-    console.log("step");
     renderingContextRef.current = render(renderingContextRef.current, 0)
-    console.log(renderingContextRef.current);
   }
+
+  const canvas = useMemo(() => {return (<canvas id="c"></canvas>)}, [])
   return (
     <>
-      <canvas id="c"></canvas>
+      {canvas}
       <div onClick={handleClickPlay}>{pausePlayButton}</div>
       <div onClick={handleClickStep}>step</div>
     </>)
@@ -93,6 +87,12 @@ interface RenderingContext  {
   textureRenderer: TextureRenderer
   canvasRenderer: CanvasRenderer
   /**
+   * sync is used to check if the rendering finished. If not, it means that we should not render the
+   * next animation frame.
+   * See https://computergraphics.stackexchange.com/questions/4964/how-to-know-when-rendering-is-complete-in-webgl
+   */
+  sync: WebGLSync | null
+  /**
    * Tell if texture A and B should be swapped when generating textures. This value should be
    * flipped every animation frame, so A is generated to B and then B is generated to A
    * (so called ping-pong rendering).
@@ -101,7 +101,7 @@ interface RenderingContext  {
 }
 
 const initializeRenderingContext = (): RenderingContext => {
-  const [width, height] = [32, 32]
+  const [width, height] = [256, 256]
   const gl = initializeGl(canvasId);
   const textureA = new Texture({
     gl,
@@ -126,7 +126,7 @@ const initializeRenderingContext = (): RenderingContext => {
   var textureRenderer = new TextureRenderer(gl);
   var canvasRenderer = new CanvasRenderer(gl);
   return {
-    textureA, textureB, gl, textureRenderer, canvasRenderer, swapTextures: false,
+    textureA, textureB, gl, textureRenderer, canvasRenderer, swapTextures: false, sync: null
   }
 }
 
@@ -134,6 +134,20 @@ const render = (c?: RenderingContext, deltaMs: number): RenderingContext | undef
   if (c === undefined) {
     return c;
   }
+  const gl = c.gl;
+  if (c.sync === null) {
+    console.log("sync is null")
+  } else {
+   const syncStatus = gl.getSyncParameter(c.sync, gl.SYNC_STATUS)
+   if (syncStatus === gl.SIGNALED) {
+      console.log("finished")
+      gl.deleteSync(c.sync)
+   } else {
+      console.log("not finished yet")
+      return c;
+   }
+  }
+
   const {textureA, textureB, textureRenderer, canvasRenderer, swapTextures} = c;
   if (swapTextures) {
     textureRenderer.renderToTexture({ input: textureB, output: textureA });
@@ -143,5 +157,10 @@ const render = (c?: RenderingContext, deltaMs: number): RenderingContext | undef
     canvasRenderer.render(textureA);
 }
   // canvasRenderer.render(textureA, textureB);
-  return {...c, swapTextures: !swapTextures};
+
+  const sync = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
+  if (sync === null) {
+    console.log("new sync is null")
+  }
+  return {...c, sync, swapTextures: !swapTextures};
 }
