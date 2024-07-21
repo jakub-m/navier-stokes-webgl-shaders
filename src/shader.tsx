@@ -18,7 +18,7 @@ export const Shader = ({custom}: ShaderProps) => {
   const prevTimeRef = useRef(0)
   const renderingContextRef = useRef<RenderingContext>()
   const fpsRef = useRef(0)
-  const pausePlayButtonRef = useRef("play")
+  const [pausePlayButton, setPausePlayButton] = useState("play")
 
   useEffect(() => {
     // Initialize GL context once.
@@ -53,15 +53,12 @@ export const Shader = ({custom}: ShaderProps) => {
   }, [animate, run, custom]);
 
   useEffect(() => {
-    console.log("run? ", run)
     if (!run) {
       return
     }
 
-    console.log("set interval")
     const interval = setInterval(() => {
-      pausePlayButtonRef.current = `stop | ${Math.round(fpsRef.current)} fps`
-      console.log(pausePlayButtonRef.current)
+      setPausePlayButton(`stop | ${Math.round(fpsRef.current)} fps`)
     }, 500)
     return () => {
       clearInterval(interval)
@@ -71,18 +68,18 @@ export const Shader = ({custom}: ShaderProps) => {
   const handleClickPlay = () => {
     if (run) {
       // Now stop.
-      pausePlayButtonRef.current = "play"
+      setPausePlayButton("play")
       setRun(false)
     } else {
       // Now run.
-      pausePlayButtonRef.current = "stop"
+      setPausePlayButton("stop")
       setRun(true)
     }
   }
   return (
     <>
       <canvas id="c"></canvas>
-      <div onClick={handleClickPlay}>{pausePlayButtonRef.current}</div>
+      <div onClick={handleClickPlay}>{pausePlayButton}</div>
     </>)
 };
 
