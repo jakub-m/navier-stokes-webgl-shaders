@@ -138,11 +138,15 @@ export class TextureRenderer {
     textureSource,
     textureVHor,
     textureVVer,
+    textureDensity,
+    intervalMs,
     output,
   }: {
     textureSource?: Texture;
     textureVHor?: Texture;
     textureVVer?: Texture;
+    textureDensity?: Texture;
+    intervalMs?: number;
     output: Texture;
   }) {
     var gl = this.gl;
@@ -152,18 +156,21 @@ export class TextureRenderer {
     var a_position_loc = gl.getAttribLocation(program, "a_position");
     var a_texcoord_loc = gl.getAttribLocation(program, "a_texcoord");
     var u_texture_size = gl.getUniformLocation(program, "u_texture_size");
-
+    var u_dt = gl.getUniformLocation(program, "u_dt");
     var u_texture_source = gl.getUniformLocation(program, "u_texture_source");
     var u_texture_v_hor = gl.getUniformLocation(program, "u_texture_v_hor");
     var u_texture_v_ver = gl.getUniformLocation(program, "u_texture_v_ver");
+    var u_texture_density = gl.getUniformLocation(program, "u_texture_density");
 
     validateLocation({
       a_position_loc,
       a_texcoord_loc,
+      u_dt,
       // u_texture_size,
       u_texture_source,
       //u_texture_v_hor,
       //u_texture_v_ver,
+      u_texture_density,
     });
 
     var vao = gl.createVertexArray();
@@ -180,7 +187,7 @@ export class TextureRenderer {
     const [width, height] = [output.width, output.height];
     gl.uniform2f(u_texture_size, width, height);
 
-    const setLoc = (
+    const setUniform1iLoc = (
       tex: Texture | undefined,
       loc: WebGLUniformLocation | null,
       message: string
@@ -196,9 +203,15 @@ export class TextureRenderer {
       );
       gl.uniform1i(loc, tex.texture_id);
     };
-    setLoc(textureSource, u_texture_source, "textureSource");
-    setLoc(textureVHor, u_texture_v_hor, "textureVHor");
-    setLoc(textureVVer, u_texture_v_ver, "textureVVer");
+    setUniform1iLoc(textureSource, u_texture_source, "textureSource");
+    setUniform1iLoc(textureVHor, u_texture_v_hor, "textureVHor");
+    setUniform1iLoc(textureVVer, u_texture_v_ver, "textureVVer");
+    setUniform1iLoc(textureDensity, u_texture_density, "textureDensity");
+
+    console.log("interval", intervalMs);
+    if (intervalMs !== undefined) {
+      gl.uniform1f(u_dt, intervalMs / 1000);
+    }
 
     gl.drawArrays(gl.TRIANGLES, 0, vertexCount);
   }

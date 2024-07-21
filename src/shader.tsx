@@ -181,9 +181,23 @@ const render = (c?: RenderingContext, deltaMs: number): RenderingContext | undef
    }
   }
 
-  const [textureDensity] = !swapTextures ? [textureDensity1] : [textureDensity2]
-  textureRenderer.renderToTexture({textureSource, output: textureDensity });
-  canvasRenderer.render(textureDensity);
+  const [
+    textureDensityIn,
+    textureDensityOut,
+  ] = !swapTextures ? [
+      textureDensity1,
+      textureDensity2,
+    ] : [
+      textureDensity2,
+      textureDensity1,
+    ]
+  textureRenderer.renderToTexture({
+    textureSource,
+    textureDensity: textureDensityIn,
+    output: textureDensityOut,
+    intervalMs: deltaMs,
+  });
+  canvasRenderer.render(textureDensityOut);
 
   const newSync = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
   if (sync === null) {

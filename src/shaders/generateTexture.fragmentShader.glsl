@@ -9,11 +9,16 @@ precision highp float;
 in vec4 v_position;
 // texture coordinates are in range [0, 1]
 in vec2 v_input_texture_coord;
+
 out vec4 out_density;
 
 uniform sampler2D u_texture_source;
 uniform sampler2D u_texture_v_hor;
 uniform sampler2D u_texture_v_ver;
+uniform sampler2D u_texture_density;
+
+// u_dt is the interval in seconds
+uniform float u_dt;
 
 // Width and height of the texture.
 uniform vec2 u_texture_size;
@@ -26,8 +31,10 @@ uniform vec2 u_texture_size;
 
 
 void main() {
-    out_density = texture(u_texture_source, v_input_texture_coord);
-    //out_density = vec4(0.5,1,1,1);
+    float density = texture(u_texture_density, v_input_texture_coord)[0];
+    float source = texture(u_texture_source, v_input_texture_coord)[0];
+    //out_density = vec4(density + source * u_dt, 0, 0, 1);
+    out_density = vec4(min(density + source * u_dt, 1.0), 0, 0, 1);
 }
 
 // // fragCoordToAbsolute translates gl_FragCoord to absolute
