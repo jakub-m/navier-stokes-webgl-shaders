@@ -88,24 +88,35 @@ interface RenderingContext  {
 }
 
 const initializeRenderingContext = (): RenderingContext => {
+  const [width, height] = [4,4]
   const gl = initializeGl(canvasId);
   const textureA = new Texture({
     gl,
     texture_id: TEXTURE_ID_A,
-    height: 2,
-    width: 2,
+    height,
+    width,
     type: "float",
   });
-  textureA.setValues([0.5, 0.5, 0.5, 0]);
+  textureA.setValues([
+    0.5, 0.5, 0.0, 0.0,
+    0.5, 0.5, 0.5, 0.0,
+    1.0, 0.5, 0.5, 0.5,
+    1.0, 1.0, 0.5, 0.5,
+  ]);
 
   const textureB = new Texture({
     gl,
     texture_id: TEXTURE_ID_B,
-    height: 2,
-    width: 2,
+    height,
+    width,
     type: "float",
   });
-  textureB.setValues([0, 0.5, 0.5, 0.5]);
+  textureB.setValues([
+    0.5, 0.5, 1.0, 1.0,
+    0.5, 0.5, 0.5, 1.0,
+    0.0, 0.5, 0.5, 0.5,
+    0.0, 0.0, 0.5, 0.5,
+  ]);
 
   var textureRenderer = new TextureRenderer(gl);
   var canvasRenderer = new CanvasRenderer(gl);
@@ -119,6 +130,6 @@ const render = (c?: RenderingContext) => {
     return
   }
   const {textureA, textureB, textureRenderer, canvasRenderer} = c;
-  textureRenderer.renderToTexture({ input: textureA, output: textureB });
+  //textureRenderer.renderToTexture({ input: textureA, output: textureB });
   canvasRenderer.render(textureA, textureB);
 }
