@@ -3,10 +3,10 @@
 // display A
 // display B
 
-import drawTextureToScreenVS from "./shaders/drawTexture.vertexShader.glsl";
-import drawTextureToScreenFS from "./shaders/drawTexture.fragmentShader.glsl";
-import renderToTextureVS from "./shaders/renderToTexture.vertexShader.glsl";
-import renderToTextureFS from "./shaders/renderToTexture.fragmentShader.glsl";
+import drawTextureToScreenVS from "./shaders/drawTextureToScreen.vertexShader.glsl";
+import drawTextureToScreenFS from "./shaders/drawTextureToScreen.fragmentShader.glsl";
+import generateTextureVS from "./shaders/generateTexture.vertexShader.glsl";
+import generateTextureFS from "./shaders/generateTexture.fragmentShader.glsl";
 
 export type GL = WebGL2RenderingContext;
 
@@ -133,8 +133,8 @@ export class TextureRenderer {
     this.gl = gl;
     this.program = createProgramFromSources(
       gl,
-      renderToTextureVS,
-      renderToTextureFS
+      generateTextureVS,
+      generateTextureFS
     );
   }
 

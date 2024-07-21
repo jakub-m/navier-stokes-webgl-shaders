@@ -1,8 +1,6 @@
 # TODO
 
-Move parts of texture code outside render loop.
-
-Use larger texture.
+Reverse matrix display.
 
 Modify matrix and render in a loop.
 
