@@ -4,15 +4,11 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import {GL, initializeGl, Texture, TextureRenderer, CanvasRenderer} from './renderCanvasWithShaders'
 
 
-export interface ShaderProps {
-  custom?: {[key: string]: any}
-}
-
 const canvasId = "#c";
 const TEXTURE_ID_A = 0;
 const TEXTURE_ID_B = 1;
 
-export const Shader = ({custom}: ShaderProps) => {
+export const Shader = () => {
   const [run, setRun] = useState(false);
   const requestAnimationFrameRef = useRef<number>()
   const prevTimeRef = useRef(0)
@@ -50,7 +46,7 @@ export const Shader = ({custom}: ShaderProps) => {
       }
       cancelAnimationFrame(requestAnimationFrameRef.current)
     };
-  }, [animate, run, custom]);
+  }, [animate, run]);
 
   useEffect(() => {
     if (!run) {
