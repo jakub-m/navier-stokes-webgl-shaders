@@ -1,8 +1,3 @@
-// Render texture A to texture B
-// Render texture B to texture A
-// display A
-// display B
-
 import drawTextureToScreenVS from "./shaders/drawTextureToScreen.vertexShader.glsl";
 import drawTextureToScreenFS from "./shaders/drawTextureToScreen.fragmentShader.glsl";
 import generateTextureVS from "./shaders/generateTexture.vertexShader.glsl";
@@ -335,26 +330,6 @@ function validateLocation(args: { [key: string]: any }) {
     }
   }
 }
-
-//function assertEquals(
-//  values: { [key: string]: any },
-//  expected: { [key: string]: any }
-//) {
-//  for (const key of Object.keys(values)) {
-//    const valueInput = values[key];
-//    const valueExpected = expected[key];
-//    if (valueInput !== valueExpected) {
-//      console.error(
-//        "For key " +
-//          key +
-//          " expected value " +
-//          valueExpected +
-//          " but got " +
-//          valueInput
-//      );
-//    }
-//  }
-//}
 
 /**
  * Ensure that the canvas has the same number of pixels as displayed on the screen. This is no obvious

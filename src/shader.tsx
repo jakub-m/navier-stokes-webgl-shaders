@@ -1,7 +1,7 @@
 import React from "react";
 import { useEffect, useState, useRef, useCallback } from "react";
 
-import {GL, initializeGl, Texture, TextureRenderer, CanvasRenderer} from './renderCanvasWithShaders'
+import {GL, initializeGl, Texture, TextureRenderer, CanvasRenderer} from './webGlUtil'
 
 
 const canvasId = "#c";
@@ -29,7 +29,7 @@ export const Shader = () => {
     }
     prevTimeRef.current = timeMs
     fpsRef.current = 1000/deltaMs
-    render(renderingContextRef.current)
+    render(renderingContextRef.current, deltaMs)
     requestAnimationFrameRef.current = requestAnimationFrame(animate);
   }, [])
 
@@ -38,7 +38,7 @@ export const Shader = () => {
     if (run) {
       requestAnimationFrameRef.current = requestAnimationFrame(animate);
     } else {
-      render(renderingContextRef.current)
+      render(renderingContextRef.current, 0)
     }
     return () => {
       if (requestAnimationFrameRef.current === undefined) {
@@ -98,10 +98,10 @@ const initializeRenderingContext = (): RenderingContext => {
     type: "float",
   });
   textureA.setValues([
-    0.5, 0.5, 0.0, 0.0,
-    0.5, 0.5, 0.5, 0.0,
-    1.0, 0.5, 0.5, 0.5,
-    1.0, 1.0, 0.5, 0.5,
+    1.0, 0.0, 0.0, 0.0,
+    0.0, 0.0, 0.0, 0.0,
+    0.0, 0.0, 0.0, 0.0,
+    0.0, 0.0, 0.0, 0.0,
   ]);
 
   const textureB = new Texture({
@@ -112,10 +112,10 @@ const initializeRenderingContext = (): RenderingContext => {
     type: "float",
   });
   textureB.setValues([
-    1.0, 1.0, 0.5, 0.5,
-    1.0, 0.5, 0.5, 0.5,
-    0.5, 0.5, 0.5, 0.0,
-    0.5, 0.5, 0.0, 0.0,
+    0.0, 0.0, 0.0, 0.0,
+    0.0, 0.0, 0.0, 0.0,
+    0.0, 0.0, 0.0, 0.0,
+    0.0, 0.0, 0.0, 0.0,
   ]);
 
   var textureRenderer = new TextureRenderer(gl);
@@ -125,11 +125,11 @@ const initializeRenderingContext = (): RenderingContext => {
   }
 }
 
-const render = (c?: RenderingContext) => {
+const render = (c?: RenderingContext, deltaMs: number) => {
   if (c === undefined) {
     return
   }
   const {textureA, textureB, textureRenderer, canvasRenderer} = c;
-  //textureRenderer.renderToTexture({ input: textureA, output: textureB });
+  textureRenderer.renderToTexture({ input: textureA, output: textureB });
   canvasRenderer.render(textureA, textureB);
 }
