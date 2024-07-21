@@ -1,14 +1,11 @@
 import React from "react";
 import { useEffect, useState, useRef, useCallback } from "react";
 
-//const renderCanvasWithShaders = require('./renderCanvasWithShaders')
 import {render} from './renderCanvasWithShaders'
-import { request } from "http";
 
 
 export interface ShaderProps {
-  run: boolean
-  custom: {[key: string]: any}
+  custom?: {[key: string]: any}
 }
 
 export const Shader = ({custom}: ShaderProps) => {
@@ -24,9 +21,9 @@ export const Shader = ({custom}: ShaderProps) => {
     }
     prevTimeRef.current = time
     console.log(1000/deltaMs + " fps");
-    render({custom})
+    render()
     requestRef.current = requestAnimationFrame(animate);
-  }, [custom])
+  }, [])
 
   useEffect(() => {
     if (run) {
@@ -42,11 +39,6 @@ export const Shader = ({custom}: ShaderProps) => {
     };
   }, [animate, run, custom]);
 
-  //useEffect(() => {
-  //  render({
-  //      custom,
-  //  })
-  //}, [custom]);
  const pausePlayButton = (run) ? "stop" : "play";
  const handleClickPlay = () => {
   setRun(r => !r)

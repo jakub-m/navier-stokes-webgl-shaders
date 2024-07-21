@@ -15,11 +15,7 @@ const canvasId = "#c";
 const TEXTURE_ID_A = 0;
 const TEXTURE_ID_B = 1;
 
-function render(args: { [key: string]: any }) {
-  const { custom } = args;
-  validateDefined({
-    custom,
-  });
+function render() {
   const gl = getGlContext(canvasId);
   enableExtension(gl, "OES_texture_float_linear"); // Allows rendering float texture (event with gl.NEAREST).
   enableExtension(gl, "EXT_color_buffer_float"); // Allows rendering to float texture.

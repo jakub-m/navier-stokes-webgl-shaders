@@ -1,6 +1,6 @@
 import React, {useState} from 'react';
 import './App.css';
-import { Shader } from './shader';
+import { Shader } from './Shader';
 import { Slider } from '@mui/material';
 //const foo = require("./foo")
 
@@ -14,7 +14,7 @@ function App() {
   return (
     <div style={{marginLeft: "3em"}}>
       <div style={{height: "3em"}}></div>
-      <div className="sliderContainer">
+      <div className="sliderContainer" hidden={true}> {/* Hide sliders */}
         Offset X
         <Slider 
           size="small"
@@ -42,9 +42,12 @@ function App() {
           }}
         />
       </div>
-      <Shader custom={{offset}}/>
+      <Shader />
     </div>
   );
 }
+/*
+
+*/
 
 export default App;

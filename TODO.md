@@ -1,6 +1,6 @@
 # TODO
 
-Render float field.
+Move parts of texture code outside render loop.
 
 Modify matrix and render in a loop.
 
