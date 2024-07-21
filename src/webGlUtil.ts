@@ -141,7 +141,14 @@ export class TextureRenderer {
     var a_position_loc = gl.getAttribLocation(program, "a_position");
     var a_texcoord_loc = gl.getAttribLocation(program, "a_texcoord");
     var u_input_texture = gl.getUniformLocation(program, "u_input_texture");
-    validateLocation({ a_position_loc, a_texcoord_loc });
+    var u_texture_size = gl.getUniformLocation(program, "u_texture_size");
+
+    validateLocation({
+      a_position_loc,
+      a_texcoord_loc,
+      u_input_texture,
+      u_texture_size,
+    });
 
     var vao = gl.createVertexArray();
     gl.bindVertexArray(vao);
@@ -156,6 +163,7 @@ export class TextureRenderer {
     gl.clear(gl.COLOR_BUFFER_BIT);
     if (input !== undefined) {
       gl.uniform1i(u_input_texture, input.texture_id);
+      gl.uniform2f(u_texture_size, input.width, input.height);
     }
 
     gl.drawArrays(gl.TRIANGLES, 0, vertexCount);

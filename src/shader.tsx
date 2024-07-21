@@ -88,7 +88,7 @@ interface RenderingContext  {
 }
 
 const initializeRenderingContext = (): RenderingContext => {
-  const [width, height] = [4,4]
+  const [width, height] = [32, 32]
   const gl = initializeGl(canvasId);
   const textureA = new Texture({
     gl,
@@ -97,12 +97,9 @@ const initializeRenderingContext = (): RenderingContext => {
     width,
     type: "float",
   });
-  textureA.setValues([
-    1.0, 0.0, 0.0, 0.0,
-    0.0, 0.0, 0.0, 0.0,
-    0.0, 0.0, 0.0, 0.0,
-    0.0, 0.0, 0.0, 0.0,
-  ]);
+  const textureAValues = Array(width * height).fill(0);
+  textureAValues[0] = 1 // TODO why those coordinates are off?
+  textureA.setValues(textureAValues);
 
   const textureB = new Texture({
     gl,
@@ -111,12 +108,7 @@ const initializeRenderingContext = (): RenderingContext => {
     width,
     type: "float",
   });
-  textureB.setValues([
-    0.0, 0.0, 0.0, 0.0,
-    0.0, 0.0, 0.0, 0.0,
-    0.0, 0.0, 0.0, 0.0,
-    0.0, 0.0, 0.0, 0.0,
-  ]);
+  textureB.setValues(Array(width * height).fill(0));
 
   var textureRenderer = new TextureRenderer(gl);
   var canvasRenderer = new CanvasRenderer(gl);

@@ -14,13 +14,15 @@ out vec4 out_color;
 // This is an input texture. The output is produced to in out_color.
 uniform sampler2D u_input_texture;
 
+// Width and height of the texture.
+uniform vec2 u_texture_size;
+
 vec2 fragCoordToAbsolute();
 vec2 inputTextureCoordToAbsolute();
 vec2 absoluteToTextureCoord(vec2 abs_coord);
 float getInputTextureValAbs(vec2 abs_coord);
 void setOutput(float value);
 
-const vec2 texture_size = vec2(4, 4);
 
 void main() {
     //vec2 xy = fragCoordToAbsolute();
@@ -53,7 +55,7 @@ vec2 fragCoordToAbsolute() {
 // Take absolute coordinates at input and return the texture value at output.
 float getInputTextureValAbs(vec2 abs_coord) {
     vec2 p = absoluteToTextureCoord(abs_coord);
-    if (p.x < 0.0 || p.y < 0.0 || p.x >= texture_size.x || p.y >= texture_size.y) {
+    if (p.x < 0.0 || p.y < 0.0 || p.x >= u_texture_size.x || p.y >= u_texture_size.y) {
         return 0.0;
     }
     vec4 t = texture(u_input_texture, p);
@@ -67,9 +69,9 @@ void setOutput(float value) {
 // v_textcoord is in texture coordinates, that is, from 0 to 1, and when rescaled, also the
 // center of the pixel is at (0.5, 0.5).
 vec2 inputTextureCoordToAbsolute() {
-    return (v_input_texture_coord * texture_size) - vec2(0.5, 0.5);
+    return (v_input_texture_coord * u_texture_size) - vec2(0.5, 0.5);
 }
 
 vec2 absoluteToTextureCoord(vec2 abs_coord) {
-    return (abs_coord + vec2(0.5, 0.5)) / texture_size;
+    return (abs_coord + vec2(0.5, 0.5)) / u_texture_size;
 }
