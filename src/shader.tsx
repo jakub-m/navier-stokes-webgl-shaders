@@ -1,18 +1,23 @@
-import React, { MutableRefObject, useMemo } from "react";
+import React, { useMemo } from "react";
 import { useEffect, useState, useRef, useCallback } from "react";
 
 import {GL, initializeGl, Texture, TextureRenderer, CanvasRenderer} from './webGlUtil'
+import generateTextureVS from "./shaders/generateTexture.vertexShader.glsl";
+import generateTextureFS from "./shaders/generateTexture.fragmentShader.glsl";
 
 
 const canvasId = "#c";
-const TEXTURE_ID_A = 0;
-const TEXTURE_ID_B = 1;
-
+const TEXTURE_V_HOR_1 = 0;
+const TEXTURE_V_HOR_2 = 1;
+const TEXTURE_V_VER_1 = 2;
+const TEXTURE_V_VER_2 = 3;
+const TEXTURE_SOURCE = 4;
+const TEXTURE_DENSITY_1 = 5;
+const TEXTURE_DENSITY_2 = 6;
 
 export interface ShaderProps {
   setFps?: (fps: number) => void
 }
-
 
 export const Shader = ({setFps}: ShaderProps) => {
   const [run, setRun] = useState(false);
@@ -82,8 +87,19 @@ export const Shader = ({setFps}: ShaderProps) => {
 
 interface RenderingContext  {
   gl: GL
-  textureA: Texture
-  textureB: Texture
+
+  /** Density source (S) */
+  textureSource: Texture
+  /** Horizontal velocity (h) */
+  textureVHor1: Texture
+  textureVHor2: Texture
+  /** Vertical velocity (v) */
+  textureVVer1: Texture
+  textureVVer2: Texture
+  /** Density (p) */
+  textureDensity1: Texture
+  textureDensity2: Texture
+
   textureRenderer: TextureRenderer
   canvasRenderer: CanvasRenderer
   /**
@@ -101,32 +117,34 @@ interface RenderingContext  {
 }
 
 const initializeRenderingContext = (): RenderingContext => {
-  const [width, height] = [256, 256]
+  const [width, height] = [16, 16]
   const gl = initializeGl(canvasId);
-  const textureA = new Texture({
-    gl,
-    texture_id: TEXTURE_ID_A,
-    height,
-    width,
-    type: "float",
-  });
-  const textureAValues = Array(width * height).fill(0);
-  textureAValues[0] = 1 // TODO why those coordinates are off?
-  textureA.setValues(textureAValues);
+  const newTexture = (texture_id: number) => {
+    return new Texture({ gl, texture_id, height, width, type: "float" });
+  }
+  
+  const sourceValues = Array(width * height).fill(0)
+  sourceValues[width * (Math.floor(height / 2)) + Math.floor(height / 2)] = 1 // initialize single pixel in the middle
 
-  const textureB = new Texture({
-    gl,
-    texture_id: TEXTURE_ID_B,
-    height,
-    width,
-    type: "float",
-  });
-  textureB.setValues(Array(width * height).fill(0));
+  const textureSource = newTexture(TEXTURE_SOURCE).setValues(sourceValues)
+  const textureVHor1 = newTexture(TEXTURE_V_HOR_1).fill(0);
+  const textureVHor2 = newTexture(TEXTURE_V_HOR_2).fill(0);
+  const textureVVer1 = newTexture(TEXTURE_V_VER_1).fill(0);
+  const textureVVer2 = newTexture(TEXTURE_V_VER_2).fill(0);
+  const textureDensity1 = newTexture(TEXTURE_DENSITY_1).fill(0);
+  const textureDensity2 = newTexture(TEXTURE_DENSITY_2).fill(0);
 
-  var textureRenderer = new TextureRenderer(gl);
+  var textureRenderer = new TextureRenderer(gl, generateTextureVS, generateTextureFS);
   var canvasRenderer = new CanvasRenderer(gl);
   return {
-    textureA, textureB, gl, textureRenderer, canvasRenderer, swapTextures: false, sync: null
+    gl, textureRenderer, canvasRenderer, swapTextures: false, sync: null, 
+    textureSource,
+    textureVHor1,
+    textureVHor2,
+    textureVVer1,
+    textureVVer2,
+    textureDensity1,
+    textureDensity2,
   }
 }
 
@@ -134,33 +152,42 @@ const render = (c?: RenderingContext, deltaMs: number): RenderingContext | undef
   if (c === undefined) {
     return c;
   }
-  const gl = c.gl;
-  if (c.sync === null) {
+
+  const {
+    gl,
+    sync,
+    textureSource,
+    textureVHor1,
+    textureVHor2,
+    textureVVer1,
+    textureVVer2,
+    textureDensity1,
+    textureDensity2,
+    textureRenderer,
+    canvasRenderer,
+    swapTextures,
+  } = c
+
+  if (sync === null) {
     console.log("sync is null")
   } else {
-   const syncStatus = gl.getSyncParameter(c.sync, gl.SYNC_STATUS)
-   if (syncStatus === gl.SIGNALED) {
+    const syncStatus = gl.getSyncParameter(sync, gl.SYNC_STATUS)
+    if (syncStatus === gl.SIGNALED) {
       console.log("finished")
       gl.deleteSync(c.sync)
-   } else {
+    } else {
       console.log("not finished yet")
       return c;
    }
   }
 
-  const {textureA, textureB, textureRenderer, canvasRenderer, swapTextures} = c;
-  if (swapTextures) {
-    textureRenderer.renderToTexture({ input: textureB, output: textureA });
-    canvasRenderer.render(textureB);
-  } else {
-    textureRenderer.renderToTexture({ input: textureA, output: textureB });
-    canvasRenderer.render(textureA);
-}
-  // canvasRenderer.render(textureA, textureB);
+  const [textureDensity] = !swapTextures ? [textureDensity1] : [textureDensity2]
+  textureRenderer.renderToTexture({textureSource, output: textureDensity });
+  canvasRenderer.render(textureDensity);
 
-  const sync = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
+  const newSync = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
   if (sync === null) {
     console.log("new sync is null")
   }
-  return {...c, sync, swapTextures: !swapTextures};
+  return {...c, sync: newSync, swapTextures: !swapTextures};
 }

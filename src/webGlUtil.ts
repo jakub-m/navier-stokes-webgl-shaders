@@ -1,7 +1,5 @@
 import drawTextureToScreenVS from "./shaders/drawTextureToScreen.vertexShader.glsl";
 import drawTextureToScreenFS from "./shaders/drawTextureToScreen.fragmentShader.glsl";
-import generateTextureVS from "./shaders/generateTexture.vertexShader.glsl";
-import generateTextureFS from "./shaders/generateTexture.fragmentShader.glsl";
 
 export type GL = WebGL2RenderingContext;
 
@@ -111,8 +109,15 @@ export class Texture {
     initializeTexture(gl, this.width, this.height, this.textureType);
   }
 
-  setValues(data: any) {
+  fill(value: number): Texture {
+    const data = Array(this.width * this.height).fill(value);
+    this.setValues(data);
+    return this;
+  }
+
+  setValues(data: any): Texture {
     initializeTexture(this.gl, this.width, this.height, this.textureType, data);
+    return this;
   }
 }
 
@@ -123,31 +128,42 @@ export class TextureRenderer {
   gl: GL;
   program: WebGLProgram;
 
-  constructor(gl: GL) {
+  constructor(gl: GL, vertexShader: string, fragmentShader: string) {
     validateDefined({ gl });
     this.gl = gl;
-    this.program = createProgramFromSources(
-      gl,
-      generateTextureVS,
-      generateTextureFS
-    );
+    this.program = createProgramFromSources(gl, vertexShader, fragmentShader);
   }
 
-  renderToTexture({ input, output }: { input?: Texture; output: Texture }) {
+  renderToTexture({
+    textureSource,
+    textureVHor,
+    textureVVer,
+    output,
+  }: {
+    textureSource?: Texture;
+    textureVHor?: Texture;
+    textureVVer?: Texture;
+    output: Texture;
+  }) {
     var gl = this.gl;
     var program = this.program;
     gl.useProgram(program);
 
     var a_position_loc = gl.getAttribLocation(program, "a_position");
     var a_texcoord_loc = gl.getAttribLocation(program, "a_texcoord");
-    var u_input_texture = gl.getUniformLocation(program, "u_input_texture");
     var u_texture_size = gl.getUniformLocation(program, "u_texture_size");
+
+    var u_texture_source = gl.getUniformLocation(program, "u_texture_source");
+    var u_texture_v_hor = gl.getUniformLocation(program, "u_texture_v_hor");
+    var u_texture_v_ver = gl.getUniformLocation(program, "u_texture_v_ver");
 
     validateLocation({
       a_position_loc,
       a_texcoord_loc,
-      u_input_texture,
-      u_texture_size,
+      // u_texture_size,
+      u_texture_source,
+      //u_texture_v_hor,
+      //u_texture_v_ver,
     });
 
     var vao = gl.createVertexArray();
@@ -161,10 +177,28 @@ export class TextureRenderer {
 
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT);
-    if (input !== undefined) {
-      gl.uniform1i(u_input_texture, input.texture_id);
-      gl.uniform2f(u_texture_size, input.width, input.height);
-    }
+    const [width, height] = [output.width, output.height];
+    gl.uniform2f(u_texture_size, width, height);
+
+    const setLoc = (
+      tex: Texture | undefined,
+      loc: WebGLUniformLocation | null,
+      message: string
+    ) => {
+      if (tex === undefined) {
+        console.log(`Skip setting ${message}`);
+        return;
+      }
+      assertEquals(
+        { width: tex.width, height: tex.height },
+        { width, height },
+        `${message} side does not match the output`
+      );
+      gl.uniform1i(loc, tex.texture_id);
+    };
+    setLoc(textureSource, u_texture_source, "textureSource");
+    setLoc(textureVHor, u_texture_v_hor, "textureVHor");
+    setLoc(textureVVer, u_texture_v_ver, "textureVVer");
 
     gl.drawArrays(gl.TRIANGLES, 0, vertexCount);
   }
@@ -445,3 +479,19 @@ const enableExtension = (gl: GL, name: string) => {
     );
   }
 };
+
+function assertEquals(
+  values: { [key: string]: any },
+  expected: { [key: string]: any },
+  message: string
+) {
+  for (const key of Object.keys(values)) {
+    const valueInput = values[key];
+    const valueExpected = expected[key];
+    if (valueInput !== valueExpected) {
+      throw Error(
+        `${message}. For key ${key} expected value ${valueExpected} but got ${valueInput}`
+      );
+    }
+  }
+}

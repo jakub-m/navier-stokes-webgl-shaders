@@ -3,6 +3,7 @@ const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
+  cache: false,
   entry: './src/index.tsx',
   module: {
     rules: [
