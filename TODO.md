@@ -2,6 +2,8 @@
 
 Move parts of texture code outside render loop.
 
+Use larger texture.
+
 Modify matrix and render in a loop.
 
 Pack struct texture matrix.

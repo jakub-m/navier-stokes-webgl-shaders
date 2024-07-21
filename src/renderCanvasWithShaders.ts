@@ -8,17 +8,22 @@ import drawTextureToScreenFS from "./shaders/drawTexture.fragmentShader.glsl";
 import renderToTextureVS from "./shaders/renderToTexture.vertexShader.glsl";
 import renderToTextureFS from "./shaders/renderToTexture.fragmentShader.glsl";
 
-type GL = WebGL2RenderingContext;
+export type GL = WebGL2RenderingContext;
 
 const canvasId = "#c";
 
 const TEXTURE_ID_A = 0;
 const TEXTURE_ID_B = 1;
 
-function render() {
+export const initializeGl = (): GL => {
   const gl = getGlContext(canvasId);
-  enableExtension(gl, "OES_texture_float_linear"); // Allows rendering float texture (event with gl.NEAREST).
+  enableExtension(gl, "OES_texture_float_linear"); // Allows rendering float texture, need also for gl.NEAREST.
   enableExtension(gl, "EXT_color_buffer_float"); // Allows rendering to float texture.
+  return gl;
+};
+
+function render() {
+  const gl = initializeGl();
   // gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
   const textureA = new Texture({
     gl,
@@ -45,26 +50,7 @@ function render() {
   canvasRenderer.render(textureA, textureB);
 }
 
-const enableExtension = (gl: GL, name: string) => {
-  const ext = gl.getExtension(name);
-  if (!ext) {
-    const version = gl.getParameter(gl.VERSION);
-    const lang = gl.getParameter(gl.SHADING_LANGUAGE_VERSION);
-    throw Error(
-      name +
-        " extension not available. \n" +
-        "GL version: " +
-        version +
-        ". GLSL version: " +
-        lang +
-        "\n" +
-        "The supported extensions are:\n" +
-        gl.getSupportedExtensions()?.join("\n")
-    );
-  }
-};
-
-class CanvasRenderer {
+export class CanvasRenderer {
   gl: GL;
   program: WebGLProgram;
   constructor(gl: GL) {
@@ -122,7 +108,8 @@ class CanvasRenderer {
   }
 }
 
-function getGlContext(selector: string): GL {
+/** Get WebGL context */
+export const getGlContext = (selector: string): GL => {
   const canvas = <HTMLCanvasElement>document.querySelector(selector);
   if (canvas === null) {
     throw Error("canvas is missing");
@@ -132,7 +119,7 @@ function getGlContext(selector: string): GL {
     throw Error("no webgl2!");
   }
   return gl;
-}
+};
 
 interface TextureProps {
   gl: GL;
@@ -142,7 +129,7 @@ interface TextureProps {
   type: "float" | "rgba";
 }
 
-class Texture {
+export class Texture {
   gl: GL;
   texture: WebGLTexture;
   texture_id: GLint;
@@ -170,7 +157,7 @@ class Texture {
 /**
  * Render program to texture.
  */
-class TextureRenderer {
+export class TextureRenderer {
   gl: GL;
   program: WebGLProgram;
 
@@ -497,5 +484,17 @@ function gl_createTexture(gl: GL): WebGLTexture {
   }
   return t;
 }
+
+const enableExtension = (gl: GL, name: string) => {
+  const ext = gl.getExtension(name);
+  if (!ext) {
+    const version = gl.getParameter(gl.VERSION);
+    const lang = gl.getParameter(gl.SHADING_LANGUAGE_VERSION);
+    const extensions = gl.getSupportedExtensions()?.join("\n");
+    throw Error(
+      `${name}  extension not available. \nGL version: ${version}.\nGLSL version: ${lang}.\nSupported extensions: \n${extensions}`
+    );
+  }
+};
 
 export { render };

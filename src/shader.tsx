@@ -29,7 +29,7 @@ export const Shader = ({custom}: ShaderProps) => {
     if (run) {
       requestRef.current = requestAnimationFrame(animate);
     } else {
-      render({custom})
+      render()
     }
     return () => {
       if (requestRef.current === undefined) {
