@@ -29,7 +29,7 @@ export const Shader = () => {
     }
     prevTimeRef.current = timeMs
     fpsRef.current = 1000/deltaMs
-    render(renderingContextRef.current, deltaMs)
+    renderingContextRef.current = render(renderingContextRef.current, deltaMs)
     requestAnimationFrameRef.current = requestAnimationFrame(animate);
   }, [])
 
@@ -38,7 +38,7 @@ export const Shader = () => {
     if (run) {
       requestAnimationFrameRef.current = requestAnimationFrame(animate);
     } else {
-      render(renderingContextRef.current, 0)
+      renderingContextRef.current = render(renderingContextRef.current, 0)
     }
     return () => {
       if (requestAnimationFrameRef.current === undefined) {
@@ -72,10 +72,17 @@ export const Shader = () => {
       setRun(true)
     }
   }
+
+  const handleClickStep = () => {
+    console.log("step");
+    renderingContextRef.current = render(renderingContextRef.current, 0)
+    console.log(renderingContextRef.current);
+  }
   return (
     <>
       <canvas id="c"></canvas>
       <div onClick={handleClickPlay}>{pausePlayButton}</div>
+      <div onClick={handleClickStep}>step</div>
     </>)
 };
 
@@ -85,6 +92,12 @@ interface RenderingContext  {
   textureB: Texture
   textureRenderer: TextureRenderer
   canvasRenderer: CanvasRenderer
+  /**
+   * Tell if texture A and B should be swapped when generating textures. This value should be
+   * flipped every animation frame, so A is generated to B and then B is generated to A
+   * (so called ping-pong rendering).
+   */
+  swapTextures: boolean
 }
 
 const initializeRenderingContext = (): RenderingContext => {
@@ -113,15 +126,22 @@ const initializeRenderingContext = (): RenderingContext => {
   var textureRenderer = new TextureRenderer(gl);
   var canvasRenderer = new CanvasRenderer(gl);
   return {
-    textureA, textureB, gl, textureRenderer, canvasRenderer
+    textureA, textureB, gl, textureRenderer, canvasRenderer, swapTextures: false,
   }
 }
 
-const render = (c?: RenderingContext, deltaMs: number) => {
+const render = (c?: RenderingContext, deltaMs: number): RenderingContext | undefined => {
   if (c === undefined) {
-    return
+    return c;
   }
-  const {textureA, textureB, textureRenderer, canvasRenderer} = c;
-  textureRenderer.renderToTexture({ input: textureA, output: textureB });
-  canvasRenderer.render(textureA, textureB);
+  const {textureA, textureB, textureRenderer, canvasRenderer, swapTextures} = c;
+  if (swapTextures) {
+    textureRenderer.renderToTexture({ input: textureB, output: textureA });
+    canvasRenderer.render(textureB);
+  } else {
+    textureRenderer.renderToTexture({ input: textureA, output: textureB });
+    canvasRenderer.render(textureA);
+}
+  // canvasRenderer.render(textureA, textureB);
+  return {...c, swapTextures: !swapTextures};
 }
