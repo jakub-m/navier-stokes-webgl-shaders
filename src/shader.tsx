@@ -41,6 +41,7 @@ export const Shader = ({setFps}: ShaderProps) => {
     if (setFps) {
       setFps(1000/deltaMs)
     }
+    // TODO do not reset deltaMs if the animation frame was not finished.
     renderingContextRef.current = render(renderingContextRef.current, deltaMs)
     requestAnimationFrameRef.current = requestAnimationFrame(animate);
   }, [setFps])

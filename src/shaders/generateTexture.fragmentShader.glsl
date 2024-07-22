@@ -23,30 +23,45 @@ uniform float u_dt;
 // Width and height of the texture.
 uniform vec2 u_texture_size;
 
-//vec2 fragCoordToAbsolute();
-//vec2 inputTextureCoordToAbsolute();
-//vec2 absoluteToTextureCoord(vec2 abs_coord);
+float getDataAtDXDY(sampler2D source, int dx, int dy);
+vec2 fragCoordToAbsolute();
+vec2 absoluteToTextureCoord(vec2 abs_coord);
 //float getInputTextureValAbs(vec2 abs_coord);
 //void setOutputDensity(float value);
+//vec2 inputTextureCoordToAbsolute();
 
 
 void main() {
-    float density = texture(u_texture_density, v_input_texture_coord)[0];
-    float source = texture(u_texture_source, v_input_texture_coord)[0];
-    //out_density = vec4(density + source * u_dt, 0, 0, 1);
+    float density = getDataAtDXDY(u_texture_density, 0, 0);
+    float source = getDataAtDXDY(u_texture_source, 0, 0);
     out_density = vec4(min(density + source * u_dt, 1.0), 0, 0, 1);
 }
 
-// // fragCoordToAbsolute translates gl_FragCoord to absolute
-// // coordinates, directly corresponding to the texture pixels,
-// // starting at (0,0) (without 0.5 offset).
-// //
-// // gl_FragCoord returns center of the rendered pixel on the screen, which means that
-// // (0,0) pixel has coords of (0.5, 0.5).
-// vec2 fragCoordToAbsolute() {
-//     vec2 xy = gl_FragCoord.xy - vec2(0.5, 0.5);
-//     return xy;
-// }
+
+float getDataAtDXDY(sampler2D source, int dx, int dy) {
+    vec2 xy = fragCoordToAbsolute();
+    xy = xy + vec2(float(dx), float(dy));
+    vec2 coord = absoluteToTextureCoord(xy);
+    return texture(source, coord)[0];
+}
+
+// fragCoordToAbsolute translates gl_FragCoord to absolute
+// coordinates, directly corresponding to the texture pixels,
+// starting at (0,0) (without 0.5 offset).
+// gl_FragCoord returns center of the rendered pixel on the screen,
+// which means that (0,0) pixel has coords of (0.5, 0.5).
+vec2 fragCoordToAbsolute() {
+    // TODO change to ivec2
+    // TODO calculate it ONCE at the very beginning.
+    vec2 xy = gl_FragCoord.xy - vec2(0.5, 0.5);
+    return xy;
+}
+
+vec2 absoluteToTextureCoord(vec2 abs_coord) {
+    return (abs_coord + vec2(0.5, 0.5)) / u_texture_size;
+}
+
+
 // 
 // // Take absolute coordinates at input and return the texture value at output.
 // float getInputTextureValAbs(vec2 abs_coord) {
@@ -67,8 +82,3 @@ void main() {
 // vec2 inputTextureCoordToAbsolute() {
 //     return (v_input_texture_coord * u_texture_size) - vec2(0.5, 0.5);
 // }
-// 
-// vec2 absoluteToTextureCoord(vec2 abs_coord) {
-//     return (abs_coord + vec2(0.5, 0.5)) / u_texture_size;
-// }
-// 
