@@ -134,18 +134,15 @@ export class TextureRenderer {
     this.program = createProgramFromSources(gl, vertexShader, fragmentShader);
   }
 
+  /**
+   * @param inputTextures is a mapping of variable name ("uniform location") to Texture.
+   */
   renderToTexture({
-    textureSource,
-    textureVHor,
-    textureVVer,
-    textureDensity,
+    inputs,
     intervalMs,
     output,
   }: {
-    textureSource?: Texture;
-    textureVHor?: Texture;
-    textureVVer?: Texture;
-    textureDensity?: Texture;
+    inputs?: { [loc: string]: Texture };
     intervalMs?: number;
     output: Texture;
   }) {
@@ -157,20 +154,12 @@ export class TextureRenderer {
     var a_texcoord_loc = gl.getAttribLocation(program, "a_texcoord");
     var u_texture_size = gl.getUniformLocation(program, "u_texture_size");
     var u_dt = gl.getUniformLocation(program, "u_dt");
-    var u_texture_source = gl.getUniformLocation(program, "u_texture_source");
-    var u_texture_v_hor = gl.getUniformLocation(program, "u_texture_v_hor");
-    var u_texture_v_ver = gl.getUniformLocation(program, "u_texture_v_ver");
-    var u_texture_density = gl.getUniformLocation(program, "u_texture_density");
 
     validateLocation({
       a_position_loc,
       a_texcoord_loc,
       u_dt,
       // u_texture_size,
-      u_texture_source,
-      //u_texture_v_hor,
-      //u_texture_v_ver,
-      u_texture_density,
     });
 
     var vao = gl.createVertexArray();
@@ -203,12 +192,15 @@ export class TextureRenderer {
       );
       gl.uniform1i(loc, tex.texture_id);
     };
-    setUniform1iLoc(textureSource, u_texture_source, "textureSource");
-    setUniform1iLoc(textureVHor, u_texture_v_hor, "textureVHor");
-    setUniform1iLoc(textureVVer, u_texture_v_ver, "textureVVer");
-    setUniform1iLoc(textureDensity, u_texture_density, "textureDensity");
 
-    console.log("interval", intervalMs);
+    if (inputs !== undefined) {
+      Object.keys(inputs).forEach((u_variable_name) => {
+        var u_loc = gl.getUniformLocation(program, u_variable_name);
+        const texture = inputs[u_variable_name];
+        setUniform1iLoc(texture, u_loc, u_variable_name);
+      });
+    }
+
     if (intervalMs !== undefined) {
       gl.uniform1f(u_dt, intervalMs / 1000);
     }

@@ -88,7 +88,6 @@ export const Shader = ({setFps}: ShaderProps) => {
 
 interface RenderingContext  {
   gl: GL
-
   /** Density source (S) */
   textureSource: Texture
   /** Horizontal velocity (h) */
@@ -193,8 +192,10 @@ const render = (c?: RenderingContext, deltaMs: number): RenderingContext | undef
       textureDensity1,
     ]
   textureRenderer.renderToTexture({
-    textureSource,
-    textureDensity: textureDensityIn,
+    inputs: {
+      u_texture_density: textureDensityIn,
+      u_texture_source: textureSource,
+    },
     output: textureDensityOut,
     intervalMs: deltaMs,
   });

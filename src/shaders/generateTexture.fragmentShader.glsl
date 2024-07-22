@@ -38,6 +38,27 @@ void main() {
 }
 
 
+/*
+N - width and height
+b - boundary mode
+diff - diffusion rate
+dt - itnerval
+
+*/
+//void diffuse (sampler2D source, int N, int b, float *x, float *x0, float diff, float dt )
+//{
+//    int i, j, k;
+//    float a = dt * diff * N * N;
+//    for ( k=0 ; k<20 ; k++ ) {
+//        output = (getDataAtDXDY(source, 0, 0) + a * (x[IX(i-1,j)]+x[IX(i+1,j)]+
+//x[IX(i,j-1)]+x[IX(i,j+1)]))/(1+4*a);
+//               
+//        }
+//    set_bnd ( N, b, x );
+//    }
+//}
+
+
 float getDataAtDXDY(sampler2D source, int dx, int dy) {
     vec2 xy = fragCoordToAbsolute();
     xy = xy + vec2(float(dx), float(dy));
