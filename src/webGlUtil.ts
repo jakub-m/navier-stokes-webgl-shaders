@@ -404,11 +404,11 @@ function resizeCanvasToDisplaySize(
   return needResize;
 }
 
-function createProgramFromSources(
+export const createProgramFromSources = (
   gl: GL,
   vertexShaderSource: string,
   fragmentShaderSource: string
-): WebGLProgram {
+): WebGLProgram => {
   var vertexShader = createShader(
     gl,
     gl.VERTEX_SHADER,
@@ -422,7 +422,7 @@ function createProgramFromSources(
     fragmentShaderSource
   );
   return createProgram(gl, vertexShader, fragmentShader);
-}
+};
 
 function createShader(
   gl: GL,
@@ -485,11 +485,11 @@ const enableExtension = (gl: GL, name: string) => {
   }
 };
 
-function assertEquals(
+export const assertEquals = (
   values: { [key: string]: any },
   expected: { [key: string]: any },
   message: string
-) {
+) => {
   for (const key of Object.keys(values)) {
     const valueInput = values[key];
     const valueExpected = expected[key];
@@ -499,4 +499,4 @@ function assertEquals(
       );
     }
   }
-}
+};

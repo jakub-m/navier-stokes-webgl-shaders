@@ -5,6 +5,8 @@ import {GL, initializeGl, Texture, TextureRenderer, CanvasRenderer} from './webG
 import generateTextureVS from "./shaders/generateTexture.vertexShader.glsl";
 import generateTextureFS from "./shaders/generateTexture.fragmentShader.glsl";
 
+import { CopyRenderer } from "./textureRenderers/copyRenderer";
+
 
 const canvasId = "#c";
 const TEXTURE_V_HOR_1 = 0;
@@ -100,7 +102,7 @@ interface RenderingContext  {
   textureDensity1: Texture
   textureDensity2: Texture
 
-  textureRenderer: TextureRenderer
+  copyRenderer: CopyRenderer
   canvasRenderer: CanvasRenderer
   /**
    * sync is used to check if the rendering finished. If not, it means that we should not render the
@@ -134,10 +136,11 @@ const initializeRenderingContext = (): RenderingContext => {
   const textureDensity1 = newTexture(TEXTURE_DENSITY_1).fill(0);
   const textureDensity2 = newTexture(TEXTURE_DENSITY_2).fill(0);
 
-  var textureRenderer = new TextureRenderer(gl, generateTextureVS, generateTextureFS);
+  //var textureRenderer = new TextureRenderer(gl, generateTextureVS, generateTextureFS);
+  const copyRenderer = new CopyRenderer(gl);
   var canvasRenderer = new CanvasRenderer(gl);
   return {
-    gl, textureRenderer, canvasRenderer, swapTextures: false, sync: null, 
+    gl, copyRenderer, canvasRenderer, swapTextures: false, sync: null, 
     textureSource,
     textureVHor1,
     textureVHor2,
@@ -163,7 +166,7 @@ const render = (c?: RenderingContext, deltaMs: number): RenderingContext | undef
     textureVVer2,
     textureDensity1,
     textureDensity2,
-    textureRenderer,
+    copyRenderer,
     canvasRenderer,
     swapTextures,
   } = c
@@ -191,13 +194,9 @@ const render = (c?: RenderingContext, deltaMs: number): RenderingContext | undef
       textureDensity2,
       textureDensity1,
     ]
-  textureRenderer.renderToTexture({
-    inputs: {
-      u_texture_density: textureDensityIn,
-      u_texture_source: textureSource,
-    },
+  copyRenderer.renderToTexture({
+    input: textureSource,
     output: textureDensityOut,
-    intervalMs: deltaMs,
   });
   canvasRenderer.render(textureDensityOut);
 
