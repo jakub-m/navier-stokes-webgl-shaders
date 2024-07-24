@@ -46,7 +46,7 @@ export class DiffuseRenderer {
    *
    * The final result will be placed in nextOutputDensity texture.
    */
-  renderToTexture(
+  render(
     densityBeforeDiffusion: Texture,
     tempOutputDensity: Texture,
     finalOutputDensity: Texture,

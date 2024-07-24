@@ -26,7 +26,7 @@ export class AddRenderer {
     );
   }
 
-  renderToTexture(textureA: Texture, textureB: Texture, output: Texture) {
+  render(textureA: Texture, textureB: Texture, output: Texture) {
     validateTexturesHaveSameSize([output, textureA, textureB]);
     var gl = this.gl;
     var program = this.program;

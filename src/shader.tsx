@@ -223,7 +223,7 @@ const render = (c?: RenderingContext, deltaMs: number): RenderingContext | undef
 
   // Here run add_source from the Paper. textureDensity3 is the output from the previous iteration,
   // and it's copied (with source added) to textureDensity1.
-  addRenderer.renderToTexture(textureSource, textureDensity3, textureDensity1)
+  addRenderer.render(textureSource, textureDensity3, textureDensity1)
 
   // Here we need to juggle the density textures. Between the frames there is only a single density
   // texture. During the rendering, we need to copy the textures when the shaders modify the textures.
@@ -234,7 +234,7 @@ const render = (c?: RenderingContext, deltaMs: number): RenderingContext | undef
   // 2. Swap t0 and t1.
   // 3. Combine initial density and t1 to t0.
   // 4. Repeat N times.
-  diffuseRenderer.renderToTexture(textureDensity1, textureDensity2, textureDensity3, deltaMs/1000)
+  diffuseRenderer.render(textureDensity1, textureDensity2, textureDensity3, deltaMs/1000)
   // Preserve the output for the next render cycle.
   // copyRenderer.renderToTexture(textureDensity3, textureDensity1)
   canvasRenderer.render(textureDensity3);
