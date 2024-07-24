@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 import { useEffect, useState, useRef, useCallback } from "react";
 
-import {GL, initializeGl, Texture, TextureRenderer, CanvasRenderer} from './webGlUtil'
+import {GL, initializeGl, Texture, CanvasRenderer} from './webGlUtil'
 import generateTextureVS from "./shaders/generateTexture.vertexShader.glsl";
 import generateTextureFS from "./shaders/generateTexture.fragmentShader.glsl";
 
@@ -144,9 +144,15 @@ const initializeRenderingContext = (): RenderingContext => {
   const textureDensity2 = newTexture(TEXTURE_DENSITY_2).fill(0);
   const textureDensity3 = newTexture(TEXTURE_DENSITY_3).fill(0);
 
-  //var textureRenderer = new TextureRenderer(gl, generateTextureVS, generateTextureFS);
   const copyRenderer = new CopyRenderer(gl);
-  const diffuseRenderer = new DiffuseRenderer(gl);
+  const diffuseRenderer = new DiffuseRenderer({gl, diffusionRate: 0.001});
+
+  // TODO remove this initialization
+  copyRenderer.renderToTexture(textureSource, textureDensity1);
+  copyRenderer.renderToTexture(textureSource, textureDensity2);
+  copyRenderer.renderToTexture(textureSource, textureDensity3);
+  // end initialization
+
   var canvasRenderer = new CanvasRenderer(gl);
   return {
     gl, copyRenderer, canvasRenderer, swapTextures: false, sync: null, 
@@ -199,22 +205,30 @@ const render = (c?: RenderingContext, deltaMs: number): RenderingContext | undef
    }
   }
 
-  const [
-    textureDensityIn,
-    textureDensityOut,
-  ] = !swapTextures ? [
-      textureDensity1,
-      textureDensity2,
-    ] : [
-      textureDensity2,
-      textureDensity1,
-    ]
-  //copyRenderer.renderToTexture({
-  //  input: textureSource,
-  //  output: textureDensityOut,
-  //});
-  diffuseRenderer.renderToTexture(textureSource, textureDensityIn, textureDensityOut)
-  canvasRenderer.render(textureDensityOut);
+  //const [
+  //  textureDensityIn,
+  //  textureDensityOut,
+  //] = !swapTextures ? [
+  //    textureDensity1,
+  //    textureDensity2,
+  //  ] : [
+  //    textureDensity2,
+  //    textureDensity1,
+  //  ]
+
+  // Here we need to juggle the density textures. Between the frames there is only a single density
+  // texture. During the rendering, we need to copy the textures when the shaders modify the textures.
+  // 1.
+  //   a. Initial density x0 before diffuse. This needs to be a readonly copy. of density.
+  //   b. Copy of initial density to t0.
+  //   c. Combine initial density and copy to t1.
+  // 2. Swap t0 and t1.
+  // 3. Combine initial density and t1 to t0.
+  // 4. Repeat.
+
+  diffuseRenderer.renderToTexture(textureDensity1, textureDensity2, textureDensity3, deltaMs/1000)
+  copyRenderer.renderToTexture(textureDensity3, textureDensity1)
+  canvasRenderer.render(textureDensity3);
 
   const newSync = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
   //if (sync === null) {

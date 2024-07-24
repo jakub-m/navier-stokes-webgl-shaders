@@ -12,24 +12,34 @@ import {
 
 import { CopyRenderer } from "./copyRenderer";
 
+export interface DiffuseRendererProps {
+  gl: GL;
+  diffusionRate: number;
+}
+
 /**
  * A shader that implements "diffuse" operation from the Paper (see README).
  */
 export class DiffuseRenderer {
   private gl: GL;
   private program: WebGLProgram;
+  private copyRenderer: CopyRenderer;
+  diffusionRate: number;
 
-  constructor(gl: GL) {
+  constructor({ gl, diffusionRate }: DiffuseRendererProps) {
     this.gl = gl;
     this.program = createProgramFromSources(
       gl,
       genericVertexShader,
       diffuseFragmentShader
     );
+    this.copyRenderer = new CopyRenderer(gl);
+    this.diffusionRate = diffusionRate;
   }
 
   /**
-   * initialDensity is x0 in the Paper. This value is the input density that is diffused.
+   * initialDensity is x0 in the Paper, that is, the density before diffuse. This value is the input density that
+   * is diffused.
    * prevOutputDensity and nextOutputDensity are the output textures to which the output
    * is calculated. The algorithm works iteratively, so it needs two outputs and will swap
    * between the outputs on each iteration.
@@ -37,28 +47,48 @@ export class DiffuseRenderer {
    * The final result will be placed in nextOutputDensity texture.
    */
   renderToTexture(
-    initialDensity: Texture,
-    prevOutputDensity: Texture,
-    nextOutputDensity: Texture
+    densityBeforeDiffusion: Texture,
+    tempOutputDensity: Texture,
+    finalOutputDensity: Texture,
+    deltaSec: number
   ) {
     validateTexturesHaveSameSize([
-      initialDensity,
-      prevOutputDensity,
-      nextOutputDensity,
+      densityBeforeDiffusion,
+      tempOutputDensity,
+      finalOutputDensity,
     ]);
-    new CopyRenderer(this.gl).renderToTexture({
-      input: initialDensity,
-      output: prevOutputDensity,
-    });
+    // TODO this first copy is probably not needed
+    this.copyRenderer.renderToTexture(
+      densityBeforeDiffusion,
+      tempOutputDensity
+    );
+    this.copyRenderer.renderToTexture(
+      densityBeforeDiffusion,
+      finalOutputDensity
+    );
 
-    // TODO apply diffuse 20 times
-    this.diffuseOnce(initialDensity, prevOutputDensity, nextOutputDensity);
+    // Diffuse applies k=20 times, iteratively (see p.6 of the Paper).
+    for (let i = 0; i < 10; i++) {
+      this.diffuseOnce(
+        densityBeforeDiffusion,
+        finalOutputDensity,
+        tempOutputDensity,
+        deltaSec
+      );
+      this.diffuseOnce(
+        densityBeforeDiffusion,
+        tempOutputDensity,
+        finalOutputDensity,
+        deltaSec
+      );
+    }
   }
 
   private diffuseOnce(
     initialDensity: Texture,
     prevOutputDensity: Texture,
-    nextOutputDensity: Texture
+    nextOutputDensity: Texture,
+    deltaSec: number
   ) {
     const gl = this.gl;
     var program = this.program;
@@ -84,11 +114,11 @@ export class DiffuseRenderer {
 
     var u_diff = gl.getUniformLocation(program, "u_diff");
     validateDefined({ u_diff });
-    gl.uniform1f(u_diff, 0.5); // diffusion rate
+    gl.uniform1f(u_diff, this.diffusionRate);
 
     var u_dt = gl.getUniformLocation(program, "u_dt");
     validateDefined({ u_dt });
-    gl.uniform1f(u_dt, 0.01); // interval in seconds
+    gl.uniform1f(u_dt, deltaSec);
 
     gl.drawArrays(gl.TRIANGLES, 0, vertexCount);
   }

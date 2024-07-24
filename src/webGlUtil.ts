@@ -10,6 +10,18 @@ export const initializeGl = (selector: string): GL => {
   return gl;
 };
 
+const enableExtension = (gl: GL, name: string) => {
+  const ext = gl.getExtension(name);
+  if (!ext) {
+    const version = gl.getParameter(gl.VERSION);
+    const lang = gl.getParameter(gl.SHADING_LANGUAGE_VERSION);
+    const extensions = gl.getSupportedExtensions()?.join("\n");
+    throw Error(
+      `${name}  extension not available. \nGL version: ${version}.\nGLSL version: ${lang}.\nSupported extensions: \n${extensions}`
+    );
+  }
+};
+
 export class CanvasRenderer {
   gl: GL;
   program: WebGLProgram;
@@ -121,139 +133,110 @@ export class Texture {
   }
 }
 
-/**
- * DEPRECATE
- * Render program to texture.
- */
-export class TextureRenderer {
-  gl: GL;
-  program: WebGLProgram;
-
-  constructor(gl: GL, vertexShader: string, fragmentShader: string) {
-    validateDefined({ gl });
-    this.gl = gl;
-    this.program = createProgramFromSources(gl, vertexShader, fragmentShader);
-  }
-
-  /**
-   * @param inputTextures is a mapping of variable name ("uniform location") to Texture.
-   */
-  renderToTexture({
-    inputs,
-    intervalMs,
-    output,
-  }: {
-    inputs?: { [loc: string]: Texture };
-    intervalMs?: number;
-    output: Texture;
-  }) {
-    var gl = this.gl;
-    var program = this.program;
-    gl.useProgram(program);
-
-    var a_position_loc = gl.getAttribLocation(program, "a_position");
-    var a_texcoord_loc = gl.getAttribLocation(program, "a_texcoord");
-    var u_texture_size = gl.getUniformLocation(program, "u_texture_size");
-    var u_dt = gl.getUniformLocation(program, "u_dt");
-
-    validateLocation({
-      a_position_loc,
-      a_texcoord_loc,
-      u_dt,
-      // u_texture_size,
-    });
-
-    var vao = gl.createVertexArray();
-    gl.bindVertexArray(vao);
-
-    // TODO do it only once, if at all.
-    initFullSquareTexturePos(gl, a_texcoord_loc);
-    const vertexCount = initFullSquareVertexPos(gl, a_position_loc);
-    // TODO do I need to create frame buffer each time, or only once?
-    this._attachFramebuffer(gl, output.texture, output.width, output.height);
-
-    gl.clearColor(0, 0, 0, 0);
-    gl.clear(gl.COLOR_BUFFER_BIT);
-    const [width, height] = [output.width, output.height];
-    gl.uniform2f(u_texture_size, width, height);
-
-    const setUniform1iLoc = (
-      tex: Texture | undefined,
-      loc: WebGLUniformLocation | null,
-      message: string
-    ) => {
-      if (tex === undefined) {
-        console.log(`Skip setting ${message}`);
-        return;
-      }
-      validateTexturesHaveSameSize([output, tex]);
-      gl.uniform1i(loc, tex.texture_id);
-    };
-
-    if (inputs !== undefined) {
-      Object.keys(inputs).forEach((u_variable_name) => {
-        var u_loc = gl.getUniformLocation(program, u_variable_name);
-        const texture = inputs[u_variable_name];
-        setUniform1iLoc(texture, u_loc, u_variable_name);
-      });
-    }
-
-    if (intervalMs !== undefined) {
-      gl.uniform1f(u_dt, intervalMs / 1000);
-    }
-
-    gl.drawArrays(gl.TRIANGLES, 0, vertexCount);
-  }
-
-  _attachFramebuffer(
-    gl: GL,
-    texture: WebGLTexture,
-    width: number,
-    height: number
-  ) {
-    const fb = gl.createFramebuffer();
-    gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
-    gl.viewport(0, 0, width, height);
-    const attachmentPoint = gl.COLOR_ATTACHMENT0;
-    const level = 0;
-    gl.framebufferTexture2D(
-      gl.FRAMEBUFFER,
-      attachmentPoint,
-      gl.TEXTURE_2D,
-      texture,
-      level
-    );
-  }
-}
-
-/**
- * Set 6 vertices so they form a rectangle covering whole viewport.
- */
-const initFullSquareVertexPos = (gl: GL, a_position_loc: GLint) => {
-  validateDefined({ gl, a_position_loc });
-  var positionBuffer = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-  gl.enableVertexAttribArray(a_position_loc);
-  gl_vertexAttribPointer({
-    gl,
-    index: a_position_loc,
-    size: 2,
-    type: gl.FLOAT,
-    normalize: false,
-    stride: 0,
-    offset: 0,
-  });
-
-  const w = 1;
-  const h = 1;
-
-  // -w, h  | w, h
-  // -w, -h | w, -h
-  const vertices = [-w, -h, w, h, -w, h, -w, -h, w, -h, w, h];
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
-
-  return vertices.length / 2;
-};
+///**
+// * DEPRECATE
+// * Render program to texture.
+// */
+//export class TextureRenderer {
+//  gl: GL;
+//  program: WebGLProgram;
+//
+//  constructor(gl: GL, vertexShader: string, fragmentShader: string) {
+//    validateDefined({ gl });
+//    this.gl = gl;
+//    this.program = createProgramFromSources(gl, vertexShader, fragmentShader);
+//  }
+//
+//  /**
+//   * @param inputTextures is a mapping of variable name ("uniform location") to Texture.
+//   */
+//  renderToTexture({
+//    inputs,
+//    intervalMs,
+//    output,
+//  }: {
+//    inputs?: { [loc: string]: Texture };
+//    intervalMs?: number;
+//    output: Texture;
+//  }) {
+//    var gl = this.gl;
+//    var program = this.program;
+//    gl.useProgram(program);
+//
+//    var a_position_loc = gl.getAttribLocation(program, "a_position");
+//    var a_texcoord_loc = gl.getAttribLocation(program, "a_texcoord");
+//    var u_texture_size = gl.getUniformLocation(program, "u_texture_size");
+//    var u_dt = gl.getUniformLocation(program, "u_dt");
+//
+//    validateLocation({
+//      a_position_loc,
+//      a_texcoord_loc,
+//      u_dt,
+//      // u_texture_size,
+//    });
+//
+//    var vao = gl.createVertexArray();
+//    gl.bindVertexArray(vao);
+//
+//    // TODO do it only once, if at all.
+//    initFullSquareTexturePos(gl, a_texcoord_loc);
+//    const vertexCount = initFullSquareVertexPos(gl, a_position_loc);
+//    // TODO do I need to create frame buffer each time, or only once?
+//    this._attachFramebuffer(gl, output.texture, output.width, output.height);
+//
+//    gl.clearColor(0, 0, 0, 0);
+//    gl.clear(gl.COLOR_BUFFER_BIT);
+//    const [width, height] = [output.width, output.height];
+//    gl.uniform2f(u_texture_size, width, height);
+//
+//    const setUniform1iLoc = (
+//      tex: Texture | undefined,
+//      loc: WebGLUniformLocation | null,
+//      message: string
+//    ) => {
+//      if (tex === undefined) {
+//        console.log(`Skip setting ${message}`);
+//        return;
+//      }
+//      validateTexturesHaveSameSize([output, tex]);
+//      gl.uniform1i(loc, tex.texture_id);
+//    };
+//
+//    if (inputs !== undefined) {
+//      Object.keys(inputs).forEach((u_variable_name) => {
+//        var u_loc = gl.getUniformLocation(program, u_variable_name);
+//        const texture = inputs[u_variable_name];
+//        setUniform1iLoc(texture, u_loc, u_variable_name);
+//      });
+//    }
+//
+//    if (intervalMs !== undefined) {
+//      gl.uniform1f(u_dt, intervalMs / 1000);
+//    }
+//
+//    gl.drawArrays(gl.TRIANGLES, 0, vertexCount);
+//  }
+//
+//  _attachFramebuffer(
+//    gl: GL,
+//    texture: WebGLTexture,
+//    width: number,
+//    height: number
+//  ) {
+//    const fb = gl.createFramebuffer();
+//    gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+//    gl.viewport(0, 0, width, height);
+//    const attachmentPoint = gl.COLOR_ATTACHMENT0;
+//    const level = 0;
+//    gl.framebufferTexture2D(
+//      gl.FRAMEBUFFER,
+//      attachmentPoint,
+//      gl.TEXTURE_2D,
+//      texture,
+//      level
+//    );
+//  }
+//}
 
 /**
  * data parameter is optional, if null then the data in the texture is undefined.
@@ -310,29 +293,6 @@ function initializeTexture(
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 }
-
-const initFullSquareTexturePos = (gl: GL, a_texcoord_loc: GLint) => {
-  validateDefined({ gl, a_texcoord_loc });
-  var texBuffer = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER, texBuffer);
-  // The texture positions must correspond to the vertices positions.
-  const texPositions = [0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1];
-  gl.bufferData(
-    gl.ARRAY_BUFFER,
-    new Float32Array(texPositions),
-    gl.STATIC_DRAW
-  );
-  gl.enableVertexAttribArray(a_texcoord_loc);
-  gl_vertexAttribPointer({
-    gl,
-    index: a_texcoord_loc,
-    size: 2, // 2 components per iteration
-    type: gl.FLOAT,
-    normalize: true, // convert from 0-255 to 0.0-1.0
-    stride: 0,
-    offset: 0,
-  });
-};
 
 interface gl_vertexAttribPointerParams {
   gl: GL;
@@ -490,6 +450,58 @@ export const prepareProgramToRenderOutput = (
   return vertexCount;
 };
 
+/**
+ * Set 6 vertices so they form a rectangle covering whole viewport.
+ */
+const initFullSquareVertexPos = (gl: GL, a_position_loc: GLint) => {
+  validateDefined({ gl, a_position_loc });
+  var positionBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+  gl.enableVertexAttribArray(a_position_loc);
+  gl_vertexAttribPointer({
+    gl,
+    index: a_position_loc,
+    size: 2,
+    type: gl.FLOAT,
+    normalize: false,
+    stride: 0,
+    offset: 0,
+  });
+
+  const w = 1;
+  const h = 1;
+
+  // -w, h  | w, h
+  // -w, -h | w, -h
+  const vertices = [-w, -h, w, h, -w, h, -w, -h, w, -h, w, h];
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+
+  return vertices.length / 2;
+};
+
+const initFullSquareTexturePos = (gl: GL, a_texcoord_loc: GLint) => {
+  validateDefined({ gl, a_texcoord_loc });
+  var texBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, texBuffer);
+  // The texture positions must correspond to the vertices positions.
+  const texPositions = [0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1];
+  gl.bufferData(
+    gl.ARRAY_BUFFER,
+    new Float32Array(texPositions),
+    gl.STATIC_DRAW
+  );
+  gl.enableVertexAttribArray(a_texcoord_loc);
+  gl_vertexAttribPointer({
+    gl,
+    index: a_texcoord_loc,
+    size: 2, // 2 components per iteration
+    type: gl.FLOAT,
+    normalize: true, // convert from 0-255 to 0.0-1.0
+    stride: 0,
+    offset: 0,
+  });
+};
+
 const attachFramebuffer = (
   gl: GL,
   texture: WebGLTexture,
@@ -517,18 +529,6 @@ function gl_createTexture(gl: GL): WebGLTexture {
   }
   return t;
 }
-
-const enableExtension = (gl: GL, name: string) => {
-  const ext = gl.getExtension(name);
-  if (!ext) {
-    const version = gl.getParameter(gl.VERSION);
-    const lang = gl.getParameter(gl.SHADING_LANGUAGE_VERSION);
-    const extensions = gl.getSupportedExtensions()?.join("\n");
-    throw Error(
-      `${name}  extension not available. \nGL version: ${version}.\nGLSL version: ${lang}.\nSupported extensions: \n${extensions}`
-    );
-  }
-};
 
 export const assertEquals = (
   values: { [key: string]: any },
