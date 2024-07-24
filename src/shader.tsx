@@ -25,7 +25,7 @@ export interface ShaderProps {
 }
 
 export const Shader = ({setFps}: ShaderProps) => {
-  const [run, setRun] = useState(false);
+  const [run, setRun] = useState(true);
   const requestAnimationFrameRef = useRef<number>()
   const prevTimeRef = useRef(0)
   const renderingContextRef = useRef<RenderingContext>()
@@ -79,13 +79,15 @@ export const Shader = ({setFps}: ShaderProps) => {
   }
 
   const handleClickStep = () => {
-    renderingContextRef.current = render(renderingContextRef.current, 0)
+    renderingContextRef.current = render(renderingContextRef.current, 0.100)
   }
 
-  const canvas = useMemo(() => {return (<canvas id="c"></canvas>)}, [])
+  const canvas = useMemo(() => {return (<canvas id="c" style={{width: "100%", height: "100%"}} />)}, [])
   return (
     <>
-      {canvas}
+      <div style={{width: "256px", height: "256px"}}>
+        {canvas}
+      </div>
       <div onClick={handleClickPlay}>{pausePlayButton}</div>
       <div onClick={handleClickStep}>step</div>
     </>)
@@ -128,7 +130,7 @@ interface RenderingContext  {
 }
 
 const initializeRenderingContext = (): RenderingContext => {
-  const [width, height] = [16, 16]
+  const [width, height] = [32, 32]
   const gl = initializeGl(canvasId);
   const newTexture = (texture_id: number) => {
     return new Texture({ gl, texture_id, height, width, type: "float" });
