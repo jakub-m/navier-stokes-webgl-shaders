@@ -218,6 +218,8 @@ const render = (c?: RenderingContext, deltaMs: number): RenderingContext | undef
    }
   }
 
+  // Density step.
+
   // From p. 8 of the paper, the density step is as follows (in pseudo-C). I believe that x0 in add_source
   // should be "s"/
   //
@@ -227,7 +229,6 @@ const render = (c?: RenderingContext, deltaMs: number): RenderingContext | undef
   //   diffuse ( N=N, b=0, x=x0, x0=x, diff, dt );
   //   advect ( N=N, b=0, d=x, d0=x0, u, v, dt );
   // }
-
 
   // Here run add_source from the Paper. textureDensity3 is the output from the previous iteration,
   // and it's copied (with source added) to textureDensity1.
@@ -244,10 +245,10 @@ const render = (c?: RenderingContext, deltaMs: number): RenderingContext | undef
   // 4. Repeat N times.
   diffuseRenderer.render(textureDensity1, textureDensity2, textureDensity3, deltaSec)
 
-  // TODO move this advect to the right place
   advectRenderer.render(textureDensity3, textureDensity1, textureHorizontalVelocity1, textureVerticalVelocity1, deltaSec);
 
-  copyRenderer.renderToTexture(textureDensity1, textureDensity3); // Stick to convention where the output density is in textureDensity3
+ // By convention where the output density is in textureDensity3
+  copyRenderer.renderToTexture(textureDensity1, textureDensity3);
   // Preserve the output for the next render cycle.
   canvasRenderer.render(textureDensity3);
 
