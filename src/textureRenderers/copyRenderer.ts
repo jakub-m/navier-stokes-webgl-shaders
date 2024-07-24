@@ -29,26 +29,7 @@ export class CopyRenderer {
     var gl = this.gl;
     var program = this.program;
     gl.useProgram(program);
-
-    // TODO move this to common
-    var a_position_loc = gl.getAttribLocation(program, "a_position");
-    var a_texcoord_loc = gl.getAttribLocation(program, "a_texcoord");
-    validateLocation({
-      a_position_loc,
-      a_texcoord_loc,
-    });
-
-    var vao = gl.createVertexArray();
-    gl.bindVertexArray(vao);
-
-    initFullSquareTexturePos(gl, a_texcoord_loc);
-    const vertexCount = initFullSquareVertexPos(gl, a_position_loc);
-    this._attachFramebuffer(gl, output.texture, output.width, output.height);
-
-    gl.clearColor(0, 0, 0, 0);
-    gl.clear(gl.COLOR_BUFFER_BIT);
-    // TODO end common
-
+    const vertexCount = prepareProgramToRenderOutput(gl, program, output);
     const [width, height] = [output.width, output.height];
     var u_texture_source = gl.getUniformLocation(program, "u_texture_source");
     assertEquals(
@@ -60,27 +41,55 @@ export class CopyRenderer {
 
     gl.drawArrays(gl.TRIANGLES, 0, vertexCount);
   }
-
-  _attachFramebuffer(
-    gl: GL,
-    texture: WebGLTexture,
-    width: number,
-    height: number
-  ) {
-    const fb = gl.createFramebuffer();
-    gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
-    gl.viewport(0, 0, width, height);
-    const attachmentPoint = gl.COLOR_ATTACHMENT0;
-    const level = 0;
-    gl.framebufferTexture2D(
-      gl.FRAMEBUFFER,
-      attachmentPoint,
-      gl.TEXTURE_2D,
-      texture,
-      level
-    );
-  }
 }
+
+/**
+ * Set up attributes and framebuffer to render a rectangular output.
+ * @returns vertex count
+ */
+const prepareProgramToRenderOutput = (
+  gl: GL,
+  program: WebGLProgram,
+  output: Texture
+): number => {
+  var a_position_loc = gl.getAttribLocation(program, "a_position");
+  var a_texcoord_loc = gl.getAttribLocation(program, "a_texcoord");
+  validateLocation({
+    a_position_loc,
+    a_texcoord_loc,
+  });
+
+  var vao = gl.createVertexArray();
+  gl.bindVertexArray(vao);
+
+  initFullSquareTexturePos(gl, a_texcoord_loc);
+  const vertexCount = initFullSquareVertexPos(gl, a_position_loc);
+  attachFramebuffer(gl, output.texture, output.width, output.height);
+
+  gl.clearColor(0, 0, 0, 0);
+  gl.clear(gl.COLOR_BUFFER_BIT);
+  return vertexCount;
+};
+
+const attachFramebuffer = (
+  gl: GL,
+  texture: WebGLTexture,
+  width: number,
+  height: number
+) => {
+  const fb = gl.createFramebuffer();
+  gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+  gl.viewport(0, 0, width, height);
+  const attachmentPoint = gl.COLOR_ATTACHMENT0;
+  const level = 0;
+  gl.framebufferTexture2D(
+    gl.FRAMEBUFFER,
+    attachmentPoint,
+    gl.TEXTURE_2D,
+    texture,
+    level
+  );
+};
 
 /**
  * Set 6 vertices so they form a rectangle covering whole viewport.
