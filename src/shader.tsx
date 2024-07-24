@@ -95,7 +95,7 @@ export const Shader = ({setFps}: ShaderProps) => {
 interface RenderingContext  {
   gl: GL
   /** Density source (S) */
-  textureSource: Texture
+  textureDensitySource: Texture
   /** Horizontal velocity (h) */
   textureHorizontalVelocity1: Texture
   textureHorizontalVelocity2: Texture
@@ -139,10 +139,10 @@ const initializeRenderingContext = (): RenderingContext => {
   
   const sourceMagnitude = 1
   const diffusionRate = 0.01
-  const sourceValues = Array(width * height).fill(0)
-  sourceValues[width * (Math.floor(height / 2)) + Math.floor(height / 2)] = sourceMagnitude // initialize single pixel in the middle
+  const densitySourceValues = Array(width * height).fill(0)
+  densitySourceValues[width * (Math.floor(height / 2)) + Math.floor(height / 2)] = sourceMagnitude // initialize single pixel in the middle
 
-  const textureSource = newTexture(TEXTURE_SOURCE).setValues(sourceValues)
+  const textureDensitySource = newTexture(TEXTURE_SOURCE).setValues(densitySourceValues)
 
   const textureHorizontalVelocity1 = newTexture(TEXTURE_V_HOR_1).fill(-0.1);
   const textureHorizontalVelocity2 = newTexture(TEXTURE_V_HOR_2).fill(0);
@@ -166,7 +166,7 @@ const initializeRenderingContext = (): RenderingContext => {
     addRenderer,
     diffuseRenderer,
     advectRenderer,
-    textureSource,
+    textureDensitySource,
     textureHorizontalVelocity1,
     textureHorizontalVelocity2,
     textureVerticalVelocity1,
@@ -187,7 +187,7 @@ const render = (c?: RenderingContext, deltaMs: number): RenderingContext | undef
   const {
     gl,
     sync,
-    textureSource,
+    textureDensitySource,
     textureHorizontalVelocity1,
     textureHorizontalVelocity2,
     textureVerticalVelocity1,
@@ -218,10 +218,13 @@ const render = (c?: RenderingContext, deltaMs: number): RenderingContext | undef
    }
   }
 
+  ////////////////
   // Density step.
+  // The input and output to the step is textureDensity3, the other density textures are
+  // intermediate buffers.
 
-  // From p. 8 of the paper, the density step is as follows (in pseudo-C). I believe that x0 in add_source
-  // should be "s"/
+  // From p. 8 of the paper, the density step is as follows (in pseudo-C). I believe that
+  // x0 in add_source should be "s".
   //
   // void dens_step ( int N, float * x, float * x0, float * u, float * v, float diff, float dt )
   // {
@@ -234,7 +237,7 @@ const render = (c?: RenderingContext, deltaMs: number): RenderingContext | undef
 
   // Here run add_source from the Paper. textureDensity3 is the output from the previous iteration,
   // and it's copied (with source added) to textureDensity1.
-  addRenderer.render(textureSource, textureDensity3, textureDensity1)
+  addRenderer.render(textureDensitySource, textureDensity3, textureDensity1)
 
   // Here we need to juggle the density textures. Between the frames there is only a single density
   // texture. During the rendering, we need to copy the textures when the shaders modify the textures.
@@ -249,7 +252,9 @@ const render = (c?: RenderingContext, deltaMs: number): RenderingContext | undef
 
   advectRenderer.render(textureDensity3, textureDensity1, textureHorizontalVelocity1, textureVerticalVelocity1, deltaSec);
 
-  // Velocity step
+  /////////////////
+  // Velocity step.
+  //
   // void vel_step ( int N, fl oat * u, float * v, float * u0, float * v0, float visc, float dt )
   // {
   //   add_source ( N, x=u, s=u0, dt );
@@ -267,7 +272,6 @@ const render = (c?: RenderingContext, deltaMs: number): RenderingContext | undef
   // }
 
   // Rendering to canvas.
-
   // By convention where the output density is in textureDensity3
   copyRenderer.render(textureDensity1, textureDensity3);
   // Preserve the output for the next render cycle.
