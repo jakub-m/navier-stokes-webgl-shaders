@@ -54,25 +54,25 @@ export class AdvectRenderer {
       finalOutputDensity
     );
 
-    const u_input_density = gl.getUniformLocation(gl, "u_input_density");
+    const u_input_density = gl.getUniformLocation(program, "u_input_density");
     validateDefined({ u_input_density });
     gl.uniform1i(u_input_density, inputDensity.texture_id);
 
     const u_horizontal_velocity = gl.getUniformLocation(
-      gl,
+      program,
       "u_horizontal_velocity"
     );
     validateDefined({ u_horizontal_velocity });
     gl.uniform1i(u_horizontal_velocity, horizontalVelocity.texture_id);
 
     const u_vertical_velocity = gl.getUniformLocation(
-      gl,
+      program,
       "u_vertical_velocity"
     );
     validateDefined({ u_vertical_velocity });
     gl.uniform1i(u_vertical_velocity, verticalVelocity.texture_id);
 
-    const u_texture_size = gl.getUniformLocation(gl, "u_texture_size");
+    const u_texture_size = gl.getUniformLocation(program, "u_texture_size");
     validateDefined({ u_texture_size });
     gl.uniform2f(
       u_texture_size,
@@ -80,7 +80,7 @@ export class AdvectRenderer {
       finalOutputDensity.height
     );
 
-    const u_dt = gl.getUniformLocation(gl, "u_dt");
+    const u_dt = gl.getUniformLocation(program, "u_dt");
     validateDefined({ u_dt });
     gl.uniform1f(u_dt, deltaSec);
 

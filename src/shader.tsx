@@ -24,7 +24,7 @@ export interface ShaderProps {
 }
 
 export const Shader = ({setFps}: ShaderProps) => {
-  const [run, setRun] = useState(true);
+  const [run, setRun] = useState(false);
   const requestAnimationFrameRef = useRef<number>()
   const prevTimeRef = useRef(0)
   const renderingContextRef = useRef<RenderingContext>()

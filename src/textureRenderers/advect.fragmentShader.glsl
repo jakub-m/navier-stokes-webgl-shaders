@@ -33,7 +33,7 @@ void main() {
 
     float dt0 = u_dt * sqrt(width * height);
 
-    vec2 xy_res = fragCoordToResolution()
+    vec2 xy_res = fragCoordToResolution();
     float i = xy_res.x;
     float j = xy_res.y;
 
@@ -41,16 +41,16 @@ void main() {
     float y = j - dt0 * getData(u_vertical_velocity);
     if (x < 0.5) x = 0.5;
     if (x > width + 0.5) x = width + 0.5;
-    int i0 = (int) x;
+    int i0 = int(x);
     int i1 = i0 + 1;
     if (y < 0.5) y = 0.5;
     if (y > height + 0.5) y = height + 0.5;
-    int j0 = (int) y;
+    int j0 = int(y);
     int j1 = j0 + 1;
-    float s1 = x - i0;
+    float s1 = x - float(i0);
     float s0 = 1.0 - s1;
-    float t1 = y - j0;
-    float t0 = 1 - t1;
+    float t1 = y - float(j0);
+    float t0 = 1.0 - t1;
 
     float d = (
         s0 * (
@@ -70,9 +70,9 @@ void main() {
 //// TODO move this to a common .glsl library and "import" in other files (concatenate).
 
 float getData(sampler2D source) {
-    return texture(source, v_input_texture_coord)[0]
-
+    return texture(source, v_input_texture_coord)[0];
 }
+
 float getDataAtDXDY(sampler2D source, int dx, int dy) {
     vec2 xy = fragCoordToResolution();
     xy = xy + vec2(float(dx), float(dy));
