@@ -192,7 +192,9 @@ const render = (c?: RenderingContext, deltaMs: number): RenderingContext | undef
       // console.log("finished")
       gl.deleteSync(c.sync)
     } else {
-      // console.log("not finished yet")
+      // TODO do not reset interval (ms) to zero when the frame is not finished, rather accumulate
+      // the interval.
+      console.log("Frame not finished yet")
       return c;
    }
   }

@@ -357,7 +357,7 @@ function gl_vertexAttribPointer({
 }
 
 /** Validate that all the keys have defined values. */
-const validateDefined = (args: { [key: string]: any }) => {
+export const validateDefined = (args: { [key: string]: any }) => {
   for (const key of Object.keys(args)) {
     const v = args[key];
     if (v === null || v === undefined) {
