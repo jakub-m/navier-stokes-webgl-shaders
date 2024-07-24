@@ -25,7 +25,7 @@ export class CopyRenderer {
     );
   }
 
-  renderToTexture(input: Texture, output: Texture) {
+  render(input: Texture, output: Texture) {
     validateTexturesHaveSameSize([output, input]);
     const gl = this.gl;
     const program = this.program;

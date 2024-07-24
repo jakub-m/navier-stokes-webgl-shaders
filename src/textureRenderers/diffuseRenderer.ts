@@ -58,14 +58,8 @@ export class DiffuseRenderer {
       finalOutputDensity,
     ]);
     // TODO this first copy is probably not needed
-    this.copyRenderer.renderToTexture(
-      densityBeforeDiffusion,
-      tempOutputDensity
-    );
-    this.copyRenderer.renderToTexture(
-      densityBeforeDiffusion,
-      finalOutputDensity
-    );
+    this.copyRenderer.render(densityBeforeDiffusion, tempOutputDensity);
+    this.copyRenderer.render(densityBeforeDiffusion, finalOutputDensity);
 
     // Diffuse applies k=20 times, iteratively (see p.6 of the Paper).
     for (let i = 0; i < 10; i++) {

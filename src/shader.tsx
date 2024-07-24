@@ -226,8 +226,10 @@ const render = (c?: RenderingContext, deltaMs: number): RenderingContext | undef
   // void dens_step ( int N, float * x, float * x0, float * u, float * v, float diff, float dt )
   // {
   //   add_source ( N=N, x=x, s=x0, dt );
-  //   diffuse ( N=N, b=0, x=x0, x0=x, diff, dt );
-  //   advect ( N=N, b=0, d=x, d0=x0, u, v, dt );
+  //   swap()
+  //   diffuse ( N=N, b=0, x=x, x0=x0, diff, dt );
+  //   swap()
+  //   advect ( N=N, b=0, d=0, d0=x0, u, v, dt );
   // }
 
   // Here run add_source from the Paper. textureDensity3 is the output from the previous iteration,
@@ -247,11 +249,29 @@ const render = (c?: RenderingContext, deltaMs: number): RenderingContext | undef
 
   advectRenderer.render(textureDensity3, textureDensity1, textureHorizontalVelocity1, textureVerticalVelocity1, deltaSec);
 
- // By convention where the output density is in textureDensity3
-  copyRenderer.renderToTexture(textureDensity1, textureDensity3);
+  // Velocity step
+  // void vel_step ( int N, fl oat * u, float * v, float * u0, float * v0, float visc, float dt )
+  // {
+  //   add_source ( N, x=u, s=u0, dt );
+  //   add_source ( N, x=v, s=v0, dt );
+  //   SWAP ( u0, u );
+  //   diffuse ( N, b=1, x=u, x0=u0, visc, dt );
+  //   SWAP ( v0, v );
+  //   diffuse ( N, b=2, x=v, x0=v0, visc, dt );
+  //   project ( N, u=u, v=v, p=u0, div=v0 );
+  //   SWAP ( u0, u );
+  //   SWAP ( v0, v );
+  //   advect ( N, b=1, d=u, d0=u0, u=u0, v=v0, dt );
+  //   advect ( N, b=2, d=v, d0=v0, u=u0, v=v0, dt );
+  //   project ( N, u=u, v=v, p=u0, div=v0 );
+  // }
+
+  // Rendering to canvas.
+
+  // By convention where the output density is in textureDensity3
+  copyRenderer.render(textureDensity1, textureDensity3);
   // Preserve the output for the next render cycle.
   canvasRenderer.render(textureDensity3);
-
 
   const newSync = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
   //if (sync === null) {
