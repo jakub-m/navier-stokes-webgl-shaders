@@ -13,8 +13,8 @@ import {
  * A texture renderer that copies texture to other texture.
  */
 export class CopyRenderer {
-  gl: GL;
-  program: WebGLProgram;
+  private gl: GL;
+  private program: WebGLProgram;
 
   constructor(gl: GL) {
     this.gl = gl;

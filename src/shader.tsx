@@ -172,14 +172,14 @@ const render = (c?: RenderingContext, deltaMs: number): RenderingContext | undef
   } = c
 
   if (sync === null) {
-    console.log("sync is null")
+    // console.log("sync is null")
   } else {
     const syncStatus = gl.getSyncParameter(sync, gl.SYNC_STATUS)
     if (syncStatus === gl.SIGNALED) {
-      console.log("finished")
+      // console.log("finished")
       gl.deleteSync(c.sync)
     } else {
-      console.log("not finished yet")
+      // console.log("not finished yet")
       return c;
    }
   }
@@ -201,8 +201,8 @@ const render = (c?: RenderingContext, deltaMs: number): RenderingContext | undef
   canvasRenderer.render(textureDensityOut);
 
   const newSync = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
-  if (sync === null) {
-    console.log("new sync is null")
-  }
+  //if (sync === null) {
+  //  console.log("new sync is null")
+  //}
   return {...c, sync: newSync, swapTextures: !swapTextures};
 }

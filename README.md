@@ -49,6 +49,6 @@
 - [Webpack and typescript](https://webpack.js.org/guides/typescript/)
 - [Building a TypeScript-React Project from Scratch with Webpack](https://medium.com/javascript-journal-unlocking-project-potential/building-a-typescript-react-project-from-scratch-with-webpack-b224a3f84e3b)
 
-
 ## Navier-Stokes Equations
-- [Real-Time Fluid Dynamics for Games](https://web.archive.org/web/20200805215025/https://pdfs.semanticscholar.org/847f/819a4ea14bd789aca8bc88e85e906cfc657c.pdf)
+
+- [Real-Time Fluid Dynamics for Games](https://web.archive.org/web/20200805215025/https://pdfs.semanticscholar.org/847f/819a4ea14bd789aca8bc88e85e906cfc657c.pdf). This article is referred to in this readme and in the code as **the Paper**.
