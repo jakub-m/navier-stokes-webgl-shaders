@@ -35,28 +35,25 @@ export class DiffuseRenderer {
    *
    * The final result will be placed in nextOutputDensity texture.
    */
-  renderToTexture({
-    initialDensity,
-    prevOutputDensity,
-    nextOutputDensity,
-  }: {
-    initialDensity: Texture;
-    prevOutputDensity: Texture;
-    nextOutputDensity: Texture;
-  }) {
+  renderToTexture(
+    initialDensity: Texture,
+    prevOutputDensity: Texture,
+    nextOutputDensity: Texture
+  ) {
     validateTexturesHaveSameSize([
       initialDensity,
       prevOutputDensity,
       nextOutputDensity,
     ]);
     var gl = this.gl;
-    var program = this.program;
-    gl.useProgram(program);
 
     new CopyRenderer(this.gl).renderToTexture({
       input: initialDensity,
       output: prevOutputDensity,
     });
+
+    var program = this.program;
+    gl.useProgram(program);
     const vertexCount = prepareProgramToRenderOutput(
       gl,
       program,

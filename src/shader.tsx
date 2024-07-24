@@ -6,6 +6,7 @@ import generateTextureVS from "./shaders/generateTexture.vertexShader.glsl";
 import generateTextureFS from "./shaders/generateTexture.fragmentShader.glsl";
 
 import { CopyRenderer } from "./textureRenderers/copyRenderer";
+import { DiffuseRenderer } from "./textureRenderers/diffuseRenderer";
 
 
 const canvasId = "#c";
@@ -16,6 +17,7 @@ const TEXTURE_V_VER_2 = 3;
 const TEXTURE_SOURCE = 4;
 const TEXTURE_DENSITY_1 = 5;
 const TEXTURE_DENSITY_2 = 6;
+const TEXTURE_DENSITY_3 = 7;
 
 export interface ShaderProps {
   setFps?: (fps: number) => void
@@ -98,11 +100,16 @@ interface RenderingContext  {
   /** Vertical velocity (v) */
   textureVVer1: Texture
   textureVVer2: Texture
-  /** Density (p) */
+  /**
+   * Density (p). We need three density buffers to implement diffuse operation. One is the initial density, and other
+   * two are previous and next output densities, swapped each iteration.
+   */
   textureDensity1: Texture
   textureDensity2: Texture
+  textureDensity3: Texture
 
   copyRenderer: CopyRenderer
+  diffuseRenderer: DiffuseRenderer
   canvasRenderer: CanvasRenderer
   /**
    * sync is used to check if the rendering finished. If not, it means that we should not render the
@@ -135,12 +142,15 @@ const initializeRenderingContext = (): RenderingContext => {
   const textureVVer2 = newTexture(TEXTURE_V_VER_2).fill(0);
   const textureDensity1 = newTexture(TEXTURE_DENSITY_1).fill(0);
   const textureDensity2 = newTexture(TEXTURE_DENSITY_2).fill(0);
+  const textureDensity3 = newTexture(TEXTURE_DENSITY_3).fill(0);
 
   //var textureRenderer = new TextureRenderer(gl, generateTextureVS, generateTextureFS);
   const copyRenderer = new CopyRenderer(gl);
+  const diffuseRenderer = new DiffuseRenderer(gl);
   var canvasRenderer = new CanvasRenderer(gl);
   return {
     gl, copyRenderer, canvasRenderer, swapTextures: false, sync: null, 
+    diffuseRenderer,
     textureSource,
     textureVHor1,
     textureVHor2,
@@ -148,6 +158,7 @@ const initializeRenderingContext = (): RenderingContext => {
     textureVVer2,
     textureDensity1,
     textureDensity2,
+    textureDensity3,
   }
 }
 
@@ -166,7 +177,9 @@ const render = (c?: RenderingContext, deltaMs: number): RenderingContext | undef
     textureVVer2,
     textureDensity1,
     textureDensity2,
+    textureDensity3,
     copyRenderer,
+    diffuseRenderer,
     canvasRenderer,
     swapTextures,
   } = c
@@ -194,10 +207,11 @@ const render = (c?: RenderingContext, deltaMs: number): RenderingContext | undef
       textureDensity2,
       textureDensity1,
     ]
-  copyRenderer.renderToTexture({
-    input: textureSource,
-    output: textureDensityOut,
-  });
+  //copyRenderer.renderToTexture({
+  //  input: textureSource,
+  //  output: textureDensityOut,
+  //});
+  diffuseRenderer.renderToTexture(textureSource, textureDensityIn, textureDensityOut)
   canvasRenderer.render(textureDensityOut);
 
   const newSync = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
