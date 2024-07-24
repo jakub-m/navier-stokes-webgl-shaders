@@ -127,7 +127,7 @@ interface RenderingContext  {
    * flipped every animation frame, so A is generated to B and then B is generated to A
    * (so called ping-pong rendering).
    */
-  swapTextures: boolean
+  // swapTextures: boolean
 }
 
 const initializeRenderingContext = (): RenderingContext => {
@@ -138,14 +138,15 @@ const initializeRenderingContext = (): RenderingContext => {
   }
   
   const sourceMagnitude = 1
-  const diffusionRate = 0.1
+  const diffusionRate = 0.01
   const sourceValues = Array(width * height).fill(0)
   sourceValues[width * (Math.floor(height / 2)) + Math.floor(height / 2)] = sourceMagnitude // initialize single pixel in the middle
 
   const textureSource = newTexture(TEXTURE_SOURCE).setValues(sourceValues)
-  const textureHorizontalVelocity1 = newTexture(TEXTURE_V_HOR_1).fill(0);
+
+  const textureHorizontalVelocity1 = newTexture(TEXTURE_V_HOR_1).fill(-0.1);
   const textureHorizontalVelocity2 = newTexture(TEXTURE_V_HOR_2).fill(0);
-  const textureVerticalVelocity1 = newTexture(TEXTURE_V_VER_1).fill(0);
+  const textureVerticalVelocity1 = newTexture(TEXTURE_V_VER_1).fill(-0.1);
   const textureVerticalVelocity2 = newTexture(TEXTURE_V_VER_2).fill(0);
   const textureDensity1 = newTexture(TEXTURE_DENSITY_1).fill(0);
   const textureDensity2 = newTexture(TEXTURE_DENSITY_2).fill(0);
@@ -159,7 +160,9 @@ const initializeRenderingContext = (): RenderingContext => {
   const advectRenderer = new AdvectRenderer(gl);
 
   return {
-    gl, copyRenderer, canvasRenderer, swapTextures: false, sync: null, 
+    gl, copyRenderer, canvasRenderer,
+    // swapTextures: false,
+    sync: null, 
     addRenderer,
     diffuseRenderer,
     advectRenderer,
@@ -197,7 +200,7 @@ const render = (c?: RenderingContext, deltaMs: number): RenderingContext | undef
     advectRenderer,
     canvasRenderer,
     addRenderer,
-    swapTextures,
+    // swapTextures,
   } = c
 
   if (sync === null) {
@@ -215,16 +218,15 @@ const render = (c?: RenderingContext, deltaMs: number): RenderingContext | undef
    }
   }
 
-  //const [
-  //  textureDensityIn,
-  //  textureDensityOut,
-  //] = !swapTextures ? [
-  //    textureDensity1,
-  //    textureDensity2,
-  //  ] : [
-  //    textureDensity2,
-  //    textureDensity1,
-  //  ]
+  // From p. 8 of the paper, the density step is as follows (in pseudo-C). I believe that x0 in add_source
+  // should be "s"/
+  //
+  // void dens_step ( int N, float * x, float * x0, float * u, float * v, float diff, float dt )
+  // {
+  //   add_source ( N=N, x=x, s=x0, dt );
+  //   diffuse ( N=N, b=0, x=x0, x0=x, diff, dt );
+  //   advect ( N=N, b=0, d=x, d0=x0, u, v, dt );
+  // }
 
 
   // Here run add_source from the Paper. textureDensity3 is the output from the previous iteration,
@@ -242,12 +244,11 @@ const render = (c?: RenderingContext, deltaMs: number): RenderingContext | undef
   // 4. Repeat N times.
   diffuseRenderer.render(textureDensity1, textureDensity2, textureDensity3, deltaSec)
 
-
   // TODO move this advect to the right place
   advectRenderer.render(textureDensity3, textureDensity1, textureHorizontalVelocity1, textureVerticalVelocity1, deltaSec);
 
+  copyRenderer.renderToTexture(textureDensity1, textureDensity3); // Stick to convention where the output density is in textureDensity3
   // Preserve the output for the next render cycle.
-  // copyRenderer.renderToTexture(textureDensity3, textureDensity1)
   canvasRenderer.render(textureDensity3);
 
 
@@ -255,5 +256,9 @@ const render = (c?: RenderingContext, deltaMs: number): RenderingContext | undef
   //if (sync === null) {
   //  console.log("new sync is null")
   //}
-  return {...c, sync: newSync, swapTextures: !swapTextures};
+  return {
+    ...c,
+    sync: newSync,
+    // swapTextures: !swapTextures,
+  };
 }
