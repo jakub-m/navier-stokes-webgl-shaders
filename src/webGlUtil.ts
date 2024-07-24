@@ -122,6 +122,7 @@ export class Texture {
 }
 
 /**
+ * DEPRECATE
  * Render program to texture.
  */
 export class TextureRenderer {
@@ -185,11 +186,7 @@ export class TextureRenderer {
         console.log(`Skip setting ${message}`);
         return;
       }
-      assertEquals(
-        { width: tex.width, height: tex.height },
-        { width, height },
-        `${message} side does not match the output`
-      );
+      validateTexturesHaveSameSize([output, tex]);
       gl.uniform1i(loc, tex.texture_id);
     };
 
@@ -232,7 +229,7 @@ export class TextureRenderer {
 /**
  * Set 6 vertices so they form a rectangle covering whole viewport.
  */
-function initFullSquareVertexPos(gl: GL, a_position_loc: GLint) {
+const initFullSquareVertexPos = (gl: GL, a_position_loc: GLint) => {
   validateDefined({ gl, a_position_loc });
   var positionBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
@@ -256,7 +253,7 @@ function initFullSquareVertexPos(gl: GL, a_position_loc: GLint) {
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
 
   return vertices.length / 2;
-}
+};
 
 /**
  * data parameter is optional, if null then the data in the texture is undefined.
@@ -314,7 +311,7 @@ function initializeTexture(
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 }
 
-function initFullSquareTexturePos(gl: GL, a_texcoord_loc: GLint) {
+const initFullSquareTexturePos = (gl: GL, a_texcoord_loc: GLint) => {
   validateDefined({ gl, a_texcoord_loc });
   var texBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, texBuffer);
@@ -335,7 +332,7 @@ function initFullSquareTexturePos(gl: GL, a_texcoord_loc: GLint) {
     stride: 0,
     offset: 0,
   });
-}
+};
 
 interface gl_vertexAttribPointerParams {
   gl: GL;
@@ -360,23 +357,23 @@ function gl_vertexAttribPointer({
 }
 
 /** Validate that all the keys have defined values. */
-function validateDefined(args: { [key: string]: any }) {
+const validateDefined = (args: { [key: string]: any }) => {
   for (const key of Object.keys(args)) {
     const v = args[key];
     if (v === null || v === undefined) {
       console.error("Value not defined:", key, "=", args[key]);
     }
   }
-}
+};
 
-function validateLocation(args: { [key: string]: any }) {
+const validateLocation = (args: { [key: string]: any }) => {
   for (const key of Object.keys(args)) {
     const v = args[key];
     if (v === null || v < 0) {
       console.error("Bad location:", key, "=", args[key]);
     }
   }
-}
+};
 
 /**
  * Ensure that the canvas has the same number of pixels as displayed on the screen. This is no obvious
@@ -465,6 +462,54 @@ function createProgram(
   return program;
 }
 
+/**
+ * Set up attributes and framebuffer to render a rectangular output.
+ * @returns vertex count
+ */
+export const prepareProgramToRenderOutput = (
+  gl: GL,
+  program: WebGLProgram,
+  output: Texture
+): number => {
+  var a_position_loc = gl.getAttribLocation(program, "a_position");
+  var a_texcoord_loc = gl.getAttribLocation(program, "a_texcoord");
+  validateLocation({
+    a_position_loc,
+    a_texcoord_loc,
+  });
+
+  var vao = gl.createVertexArray();
+  gl.bindVertexArray(vao);
+
+  initFullSquareTexturePos(gl, a_texcoord_loc);
+  const vertexCount = initFullSquareVertexPos(gl, a_position_loc);
+  attachFramebuffer(gl, output.texture, output.width, output.height);
+
+  gl.clearColor(0, 0, 0, 0);
+  gl.clear(gl.COLOR_BUFFER_BIT);
+  return vertexCount;
+};
+
+const attachFramebuffer = (
+  gl: GL,
+  texture: WebGLTexture,
+  width: number,
+  height: number
+) => {
+  const fb = gl.createFramebuffer();
+  gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+  gl.viewport(0, 0, width, height);
+  const attachmentPoint = gl.COLOR_ATTACHMENT0;
+  const level = 0;
+  gl.framebufferTexture2D(
+    gl.FRAMEBUFFER,
+    attachmentPoint,
+    gl.TEXTURE_2D,
+    texture,
+    level
+  );
+};
+
 function gl_createTexture(gl: GL): WebGLTexture {
   const t = gl.createTexture();
   if (t === null) {
@@ -498,5 +543,21 @@ export const assertEquals = (
         `${message}. For key ${key} expected value ${valueExpected} but got ${valueInput}`
       );
     }
+  }
+};
+
+export const validateTexturesHaveSameSize = (textures: Texture[]) => {
+  if (textures.length === 0) {
+    return;
+  }
+  const t = textures[0];
+  const [w, h] = [t.width, t.height];
+  for (var p of textures) {
+    if (w === p.width && h === p.height) {
+      continue;
+    }
+    throw Error(
+      `Textures have different sizes: [${w}, ${h}] and [${p.width}, ${p.height}]`
+    );
   }
 };
