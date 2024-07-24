@@ -2,12 +2,11 @@ import React, { useMemo } from "react";
 import { useEffect, useState, useRef, useCallback } from "react";
 
 import {GL, initializeGl, Texture, CanvasRenderer} from './webGlUtil'
-//import generateTextureVS from "./shaders/generateTexture.vertexShader.glsl";
-//import generateTextureFS from "./shaders/generateTexture.fragmentShader.glsl";
 
 import { CopyRenderer } from "./textureRenderers/copyRenderer";
 import { DiffuseRenderer } from "./textureRenderers/diffuseRenderer";
 import { AddRenderer } from "./textureRenderers/addRenderer";
+import { AdvectRenderer } from "./textureRenderers/advectRenderer";
 
 
 const canvasId = "#c";
@@ -98,11 +97,11 @@ interface RenderingContext  {
   /** Density source (S) */
   textureSource: Texture
   /** Horizontal velocity (h) */
-  textureVHor1: Texture
-  textureVHor2: Texture
+  textureHorizontalVelocity1: Texture
+  textureHorizontalVelocity2: Texture
   /** Vertical velocity (v) */
-  textureVVer1: Texture
-  textureVVer2: Texture
+  textureVerticalVelocity1: Texture
+  textureVerticalVelocity2: Texture
   /**
    * Density (p). We need three density buffers to implement diffuse operation. One is the initial density, and other
    * two are previous and next output densities, swapped each iteration.
@@ -115,6 +114,8 @@ interface RenderingContext  {
   diffuseRenderer: DiffuseRenderer
   canvasRenderer: CanvasRenderer
   addRenderer: AddRenderer
+  advectRenderer: AdvectRenderer
+
   /**
    * sync is used to check if the rendering finished. If not, it means that we should not render the
    * next animation frame.
@@ -142,10 +143,10 @@ const initializeRenderingContext = (): RenderingContext => {
   sourceValues[width * (Math.floor(height / 2)) + Math.floor(height / 2)] = sourceMagnitude // initialize single pixel in the middle
 
   const textureSource = newTexture(TEXTURE_SOURCE).setValues(sourceValues)
-  const textureVHor1 = newTexture(TEXTURE_V_HOR_1).fill(0);
-  const textureVHor2 = newTexture(TEXTURE_V_HOR_2).fill(0);
-  const textureVVer1 = newTexture(TEXTURE_V_VER_1).fill(0);
-  const textureVVer2 = newTexture(TEXTURE_V_VER_2).fill(0);
+  const textureHorizontalVelocity1 = newTexture(TEXTURE_V_HOR_1).fill(0);
+  const textureHorizontalVelocity2 = newTexture(TEXTURE_V_HOR_2).fill(0);
+  const textureVerticalVelocity1 = newTexture(TEXTURE_V_VER_1).fill(0);
+  const textureVerticalVelocity2 = newTexture(TEXTURE_V_VER_2).fill(0);
   const textureDensity1 = newTexture(TEXTURE_DENSITY_1).fill(0);
   const textureDensity2 = newTexture(TEXTURE_DENSITY_2).fill(0);
   const textureDensity3 = newTexture(TEXTURE_DENSITY_3).fill(0);
@@ -155,16 +156,18 @@ const initializeRenderingContext = (): RenderingContext => {
 
   const canvasRenderer = new CanvasRenderer(gl);
   const addRenderer = new AddRenderer(gl);
+  const advectRenderer = new AdvectRenderer(gl);
 
   return {
     gl, copyRenderer, canvasRenderer, swapTextures: false, sync: null, 
     addRenderer,
     diffuseRenderer,
+    advectRenderer,
     textureSource,
-    textureVHor1,
-    textureVHor2,
-    textureVVer1,
-    textureVVer2,
+    textureHorizontalVelocity1,
+    textureHorizontalVelocity2,
+    textureVerticalVelocity1,
+    textureVerticalVelocity2,
     textureDensity1,
     textureDensity2,
     textureDensity3,
@@ -176,19 +179,22 @@ const render = (c?: RenderingContext, deltaMs: number): RenderingContext | undef
     return c;
   }
 
+  const deltaSec = deltaMs / 1000;
+
   const {
     gl,
     sync,
     textureSource,
-    textureVHor1,
-    textureVHor2,
-    textureVVer1,
-    textureVVer2,
+    textureHorizontalVelocity1,
+    textureHorizontalVelocity2,
+    textureVerticalVelocity1,
+    textureVerticalVelocity2,
     textureDensity1,
     textureDensity2,
     textureDensity3,
     copyRenderer,
     diffuseRenderer,
+    advectRenderer,
     canvasRenderer,
     addRenderer,
     swapTextures,
@@ -234,10 +240,16 @@ const render = (c?: RenderingContext, deltaMs: number): RenderingContext | undef
   // 2. Swap t0 and t1.
   // 3. Combine initial density and t1 to t0.
   // 4. Repeat N times.
-  diffuseRenderer.render(textureDensity1, textureDensity2, textureDensity3, deltaMs/1000)
+  diffuseRenderer.render(textureDensity1, textureDensity2, textureDensity3, deltaSec)
+
+
+  // TODO move this advect to the right place
+  advectRenderer.render(textureDensity3, textureDensity1, textureHorizontalVelocity1, textureVerticalVelocity1, deltaSec);
+
   // Preserve the output for the next render cycle.
   // copyRenderer.renderToTexture(textureDensity3, textureDensity1)
   canvasRenderer.render(textureDensity3);
+
 
   const newSync = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
   //if (sync === null) {
