@@ -9,7 +9,7 @@ out vec4 output_color;
 
 uniform sampler2D u_texture_source;
 
-
+// Shader copying texture to another texture.
 void main() {
     output_color = texture(u_texture_source, v_input_texture_coord);
 }

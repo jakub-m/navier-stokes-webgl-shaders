@@ -27,11 +27,11 @@ export class CopyRenderer {
 
   renderToTexture(input: Texture, output: Texture) {
     validateTexturesHaveSameSize([output, input]);
-    var gl = this.gl;
-    var program = this.program;
+    const gl = this.gl;
+    const program = this.program;
     gl.useProgram(program);
     const vertexCount = prepareProgramToRenderOutput(gl, program, output);
-    var u_texture_source = gl.getUniformLocation(program, "u_texture_source");
+    const u_texture_source = gl.getUniformLocation(program, "u_texture_source");
     gl.uniform1i(u_texture_source, input.texture_id);
     gl.drawArrays(gl.TRIANGLES, 0, vertexCount);
   }

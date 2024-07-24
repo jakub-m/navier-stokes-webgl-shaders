@@ -2,11 +2,12 @@ import React, { useMemo } from "react";
 import { useEffect, useState, useRef, useCallback } from "react";
 
 import {GL, initializeGl, Texture, CanvasRenderer} from './webGlUtil'
-import generateTextureVS from "./shaders/generateTexture.vertexShader.glsl";
-import generateTextureFS from "./shaders/generateTexture.fragmentShader.glsl";
+//import generateTextureVS from "./shaders/generateTexture.vertexShader.glsl";
+//import generateTextureFS from "./shaders/generateTexture.fragmentShader.glsl";
 
 import { CopyRenderer } from "./textureRenderers/copyRenderer";
 import { DiffuseRenderer } from "./textureRenderers/diffuseRenderer";
+import { AddRenderer } from "./textureRenderers/addRenderer";
 
 
 const canvasId = "#c";
@@ -111,6 +112,7 @@ interface RenderingContext  {
   copyRenderer: CopyRenderer
   diffuseRenderer: DiffuseRenderer
   canvasRenderer: CanvasRenderer
+  addRenderer: AddRenderer
   /**
    * sync is used to check if the rendering finished. If not, it means that we should not render the
    * next animation frame.
@@ -132,8 +134,10 @@ const initializeRenderingContext = (): RenderingContext => {
     return new Texture({ gl, texture_id, height, width, type: "float" });
   }
   
+  const sourceMagnitude = 1
+  const diffusionRate = 0.1
   const sourceValues = Array(width * height).fill(0)
-  sourceValues[width * (Math.floor(height / 2)) + Math.floor(height / 2)] = 1 // initialize single pixel in the middle
+  sourceValues[width * (Math.floor(height / 2)) + Math.floor(height / 2)] = sourceMagnitude // initialize single pixel in the middle
 
   const textureSource = newTexture(TEXTURE_SOURCE).setValues(sourceValues)
   const textureVHor1 = newTexture(TEXTURE_V_HOR_1).fill(0);
@@ -145,17 +149,14 @@ const initializeRenderingContext = (): RenderingContext => {
   const textureDensity3 = newTexture(TEXTURE_DENSITY_3).fill(0);
 
   const copyRenderer = new CopyRenderer(gl);
-  const diffuseRenderer = new DiffuseRenderer({gl, diffusionRate: 0.001});
+  const diffuseRenderer = new DiffuseRenderer({gl, diffusionRate});
 
-  // TODO remove this initialization
-  copyRenderer.renderToTexture(textureSource, textureDensity1);
-  copyRenderer.renderToTexture(textureSource, textureDensity2);
-  copyRenderer.renderToTexture(textureSource, textureDensity3);
-  // end initialization
+  const canvasRenderer = new CanvasRenderer(gl);
+  const addRenderer = new AddRenderer(gl);
 
-  var canvasRenderer = new CanvasRenderer(gl);
   return {
     gl, copyRenderer, canvasRenderer, swapTextures: false, sync: null, 
+    addRenderer,
     diffuseRenderer,
     textureSource,
     textureVHor1,
@@ -187,6 +188,7 @@ const render = (c?: RenderingContext, deltaMs: number): RenderingContext | undef
     copyRenderer,
     diffuseRenderer,
     canvasRenderer,
+    addRenderer,
     swapTextures,
   } = c
 
@@ -216,6 +218,11 @@ const render = (c?: RenderingContext, deltaMs: number): RenderingContext | undef
   //    textureDensity1,
   //  ]
 
+
+  // Here run add_source from the Paper. textureDensity3 is the output from the previous iteration,
+  // and it's copied (with source added) to textureDensity1.
+  addRenderer.renderToTexture(textureSource, textureDensity3, textureDensity1)
+
   // Here we need to juggle the density textures. Between the frames there is only a single density
   // texture. During the rendering, we need to copy the textures when the shaders modify the textures.
   // 1.
@@ -224,10 +231,10 @@ const render = (c?: RenderingContext, deltaMs: number): RenderingContext | undef
   //   c. Combine initial density and copy to t1.
   // 2. Swap t0 and t1.
   // 3. Combine initial density and t1 to t0.
-  // 4. Repeat.
-
+  // 4. Repeat N times.
   diffuseRenderer.renderToTexture(textureDensity1, textureDensity2, textureDensity3, deltaMs/1000)
-  copyRenderer.renderToTexture(textureDensity3, textureDensity1)
+  // Preserve the output for the next render cycle.
+  // copyRenderer.renderToTexture(textureDensity3, textureDensity1)
   canvasRenderer.render(textureDensity3);
 
   const newSync = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
