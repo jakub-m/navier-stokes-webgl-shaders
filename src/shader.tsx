@@ -180,7 +180,7 @@ const initializeRenderingContext = ({diffusionRate, viscosity, outputSelector}: 
     return new Texture({ gl, texture_id, height, width, type: "float" });
   }
   
-  const sourceMagnitude = 2
+  const sourceMagnitude = 100
   const densitySourceValues = Array(width * height).fill(0)
   densitySourceValues[width * (Math.floor(height / 2)) + Math.floor(height / 2)] = sourceMagnitude // initialize single pixel in the middle
 
@@ -329,36 +329,38 @@ const render = (c: RenderingContext, deltaMs: number): RenderingContext | undefi
   //   project ( N, u=u, v=v, p=u0, div=v0 );
   // }
 
-  //addRenderer.render(
-  //  horizontalVelocities[IN],
-  //  horizontalVelocitySource,
-  //  horizontalVelocities[OUT],
-  //  deltaSec)
-  //addRenderer.render(
-  //  verticalVelocities[IN],
-  //  verticalVelocitySource,
-  //  verticalVelocities[OUT],
-  //  deltaSec,
-  //)
+  addRenderer.render(
+    horizontalVelocities[IN],
+    horizontalVelocitySource,
+    horizontalVelocities[OUT],
+    deltaSec)
+  addRenderer.render(
+    verticalVelocities[IN],
+    verticalVelocitySource,
+    verticalVelocities[OUT],
+    deltaSec,
+  )
 
-  ///swap(horizontalVelocities)
-  ///swap(verticalVelocities)
+  swap(horizontalVelocities)
+  swap(verticalVelocities)
 
-  ///// vel 1 is the previous output
-  ///diffuseRenderer.render(
-  ///  horizontalVelocities[IN],
-  ///  textureTemp,
-  ///  horizontalVelocities[OUT],
-  ///  deltaSec,
-  ///  viscosity,
-  ///)
-  ///diffuseRenderer.render(
-  ///  verticalVelocities[IN],
-  ///  textureTemp,
-  ///  verticalVelocities[OUT],
-  ///  deltaSec,
-  ///  viscosity,
-  ///)
+  // vel 1 is the previous output
+  diffuseRenderer.render(
+    horizontalVelocities[IN],
+    textureTemp,
+    horizontalVelocities[OUT],
+    deltaSec,
+    viscosity,
+  )
+  diffuseRenderer.render(
+    verticalVelocities[IN],
+    textureTemp,
+    verticalVelocities[OUT],
+    deltaSec,
+    viscosity,
+  )
+  // MODIFIED DENSITIES
+  // MODIFIED VELOCITIES
 
   // Rendering to canvas.
   // By convention where the output density is in density2
@@ -366,6 +368,8 @@ const render = (c: RenderingContext, deltaMs: number): RenderingContext | undefi
   // Prepare for the next rendering cycle. Make sure that texture "1" is in and "2" is out.
   // Since after all the swaps we don't know which is which, just copy it.
   copyRenderer.render(densities[OUT], densities[IN]);
+  copyRenderer.render(horizontalVelocities[OUT], horizontalVelocities[IN])
+  copyRenderer.render(verticalVelocities[OUT], verticalVelocities[IN])
   // Preserve the output for the next render cycle.
   if (outputSelector === OutputSelector.DENSITY) {
     canvasRenderer.render(densities[OUT]);

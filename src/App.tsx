@@ -5,8 +5,8 @@ import { Slider, Select, MenuItem, SelectChangeEvent } from '@mui/material';
 
 
 function App() {
-  const [diffusionRate, setDiffusionRate] = useState(0.1)
-  const [viscosity, setViscosity] = useState(0.1)
+  const [diffusionRate, setDiffusionRate] = useState(0.02)
+  const [viscosity, setViscosity] = useState(0.01)
   const [fps, setFps] = useState(0)
   const [outputSelector, setOutputSelector] = useState(OutputSelector.DENSITY)
 
@@ -26,8 +26,8 @@ function App() {
         size="small"
         valueLabelDisplay="auto"
         min={0}
-        step={0.01}
-        max={1}
+        step={0.001}
+        max={0.5}
         value={diffusionRate}
         onChange={(e) => {
           const t = e.target as HTMLInputElement;
@@ -43,8 +43,8 @@ function App() {
         size="small"
         valueLabelDisplay="auto"
         min={0}
-        step={0.01}
-        max={1}
+        step={0.001}
+        max={0.1}
         value={viscosity}
         onChange={(e) => {
           const t = e.target as HTMLInputElement;
