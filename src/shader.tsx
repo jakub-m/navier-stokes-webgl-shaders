@@ -18,7 +18,16 @@ const TEXTURE_DENSITY_1 = 5;
 const TEXTURE_DENSITY_2 = 6;
 const TEXTURE_TEMP = 7;
 const TEXTURE_V_HOR_S = 8;
-const TEXTURE_V_VER_S = 9
+const TEXTURE_V_VER_S = 9;
+
+const IN = 0
+const OUT = 1
+
+const swap = <T,>(arr: T[]): void => {
+  const [a, b] = [arr[0], arr[1]]
+  arr[0] = b
+  arr[1] = a
+}
 
 export enum OutputSelector {
   DENSITY,
@@ -35,7 +44,7 @@ export interface ShaderProps {
 }
 
 export const Shader = ({setFps, diffusionRate = 0.1, viscosity = 0.5, outputSelector = OutputSelector.DENSITY}: ShaderProps) => {
-  const [run, setRun] = useState(true); // default run
+  const [run, setRun] = useState(false); // default run
   const requestAnimationFrameRef = useRef<number>()
   const prevTimeRef = useRef(0)
   const renderingContextRef = useRef<RenderingContext>()
@@ -171,7 +180,7 @@ const initializeRenderingContext = ({diffusionRate, viscosity, outputSelector}: 
     return new Texture({ gl, texture_id, height, width, type: "float" });
   }
   
-  const sourceMagnitude = 5
+  const sourceMagnitude = 2
   const densitySourceValues = Array(width * height).fill(0)
   densitySourceValues[width * (Math.floor(height / 2)) + Math.floor(height / 2)] = sourceMagnitude // initialize single pixel in the middle
 
@@ -276,9 +285,15 @@ const render = (c: RenderingContext, deltaMs: number): RenderingContext | undefi
   //   advect ( N=N, b=0, d=0, d0=x0, u, v, dt );
   // }
 
+  // "2" is output from the previous rendering cycle, which makes 
+  // it input to this rendering cycle.
+  const densities = [textureDensity2, textureDensity1]
+  const horizontalVelocities = [textureHorizontalVelocity2, textureHorizontalVelocity1]
+  const verticalVelocities = [textureVerticalVelocity2, textureVerticalVelocity1]
+
   // Here run add_source from the Paper. textureDensity2 is the output from the previous iteration,
   // and it's copied (with source added) to textureDensity1.
-  addRenderer.render(textureDensitySource, textureDensity2, textureDensity1, deltaSec)
+  addRenderer.render(densities[IN], textureDensitySource, densities[OUT], deltaSec)
 
   // Here we need to juggle the density textures. Between the frames there is only a single density
   // texture. During the rendering, we need to copy the textures when the shaders modify the textures.
@@ -289,9 +304,11 @@ const render = (c: RenderingContext, deltaMs: number): RenderingContext | undefi
   // 2. Swap t0 and t1.
   // 3. Combine initial density and t1 to t0.
   // 4. Repeat N times.
-  diffuseRenderer.render(textureDensity1, textureTemp, textureDensity2, deltaSec, diffusionRate)
+  swap(densities)
+  diffuseRenderer.render(densities[IN], textureTemp, densities[OUT], deltaSec, diffusionRate)
 
-  advectRenderer.render(textureDensity2, textureDensity1, textureHorizontalVelocity1, textureVerticalVelocity1, deltaSec);
+  swap(densities)
+  advectRenderer.render(densities[IN], densities[OUT], horizontalVelocities[IN], verticalVelocities[IN], deltaSec);
 
   /////////////////
   // Velocity step.
@@ -313,42 +330,47 @@ const render = (c: RenderingContext, deltaMs: number): RenderingContext | undefi
   // }
 
   // By convention, input and output is "2" texture of velocity.
-  addRenderer.render(
-    textureHorizontalVelocity2,
-    textureHorizontalVelocitySource,
-    textureHorizontalVelocity1,
-    deltaSec)
-  addRenderer.render(
-    textureVerticalVelocity2,
-    textureVerticalVelocitySource,
-    textureVerticalVelocity1,
-    deltaSec,
-  )
 
-  // vel 1 is the previous output
-  diffuseRenderer.render(
-    textureHorizontalVelocity1,
-    textureTemp,
-    textureHorizontalVelocity2,
-    deltaSec,
-    viscosity,
-  )
-  diffuseRenderer.render(
-    textureVerticalVelocity1,
-    textureTemp,
-    textureVerticalVelocity2,
-    deltaSec,
-    viscosity,
-  )
+  ///addRenderer.render(
+  ///  horizontalVelocities[IN],
+  ///  textureHorizontalVelocitySource,
+  ///  horizontalVelocities[OUT],
+  ///  deltaSec)
+  ///addRenderer.render(
+  ///  verticalVelocities[IN],
+  ///  textureVerticalVelocitySource,
+  ///  verticalVelocities[OUT],
+  ///  deltaSec,
+  ///)
 
-  // vel2 is now the previous output
+  ///swap(horizontalVelocities)
+  ///swap(verticalVelocities)
+
+  ///// vel 1 is the previous output
+  ///diffuseRenderer.render(
+  ///  horizontalVelocities[IN],
+  ///  textureTemp,
+  ///  horizontalVelocities[OUT],
+  ///  deltaSec,
+  ///  viscosity,
+  ///)
+  ///diffuseRenderer.render(
+  ///  verticalVelocities[IN],
+  ///  textureTemp,
+  ///  verticalVelocities[OUT],
+  ///  deltaSec,
+  ///  viscosity,
+  ///)
 
   // Rendering to canvas.
   // By convention where the output density is in textureDensity2
-  copyRenderer.render(textureDensity1, textureDensity2);
+
+  // Prepare for the next rendering cycle. Make sure that texture "1" is in and "2" is out.
+  // Since after all the swaps we don't know which is which, just copy it.
+  copyRenderer.render(densities[OUT], densities[IN]);
   // Preserve the output for the next render cycle.
   if (outputSelector === OutputSelector.DENSITY) {
-    canvasRenderer.render(textureDensity2);
+    canvasRenderer.render(densities[OUT]);
   } else if (outputSelector === OutputSelector.DENSITY_SOURCE) {
     canvasRenderer.render(textureDensitySource);
   } else if (outputSelector === OutputSelector.HORIZONTAL_VELOCITY) {
