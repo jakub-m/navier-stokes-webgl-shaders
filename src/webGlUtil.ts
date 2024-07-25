@@ -1,5 +1,6 @@
 import drawTextureToScreenVS from "./shaders/drawTextureToScreen.vertexShader.glsl";
 import drawTextureToScreenFS from "./shaders/drawTextureToScreen.fragmentShader.glsl";
+import commonFS from "./textureRenderers/common.fragmentShader.glsl";
 
 export type GL = WebGL2RenderingContext;
 
@@ -560,4 +561,8 @@ export const validateTexturesHaveSameSize = (textures: Texture[]) => {
       `Textures have different sizes: [${w}, ${h}] and [${p.width}, ${p.height}]`
     );
   }
+};
+
+export const appendCommonGlsl = (source: string): string => {
+  return `${source}\n${commonFS}`;
 };

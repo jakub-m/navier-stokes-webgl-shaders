@@ -2,11 +2,9 @@
 
 precision highp float;
 
-// header
 vec2 resolutionToTextureCoord(vec2 abs_coord);
 float getDataAtDXDY(sampler2D source, int dx, int dy);
 vec2 fragCoordToResolution();
-// header end
 
 in vec4 v_position;
 in vec2 v_input_texture_coord;
@@ -51,36 +49,4 @@ void main() {
 
     // TODO implement set_bnd
     // set_bnd ( N, b, x );
-}
-
-
-
-////////////////////////////////////////////////////////////////////////////
-// TODO move this to a common .glsl library and "import" in other files (concatenate).
-
-// "texture" coord means texture coordinates between 0 and 1.
-// "resolution" coord are the actual pixel numbers, from 0 to width or height.
-
-float getDataAtDXDY(sampler2D source, int dx, int dy) {
-    vec2 xy = fragCoordToResolution();
-    xy = xy + vec2(float(dx), float(dy));
-    vec2 coord = resolutionToTextureCoord(xy);
-    return texture(source, coord)[0];
-}
-
-
-// fragCoordToResolution translates gl_FragCoord to resolution
-// coordinates, directly corresponding to the texture pixels,
-// starting at (0,0) (without 0.5 offset).
-// gl_FragCoord returns center of the rendered pixel on the screen,
-// which means that (0,0) pixel has coords of (0.5, 0.5).
-vec2 fragCoordToResolution() {
-    // TODO change to ivec2
-    // TODO calculate it ONCE at the very beginning.
-    vec2 xy = gl_FragCoord.xy - vec2(0.5, 0.5);
-    return xy;
-}
-
-vec2 resolutionToTextureCoord(vec2 abs_coord) {
-    return (abs_coord + vec2(0.5, 0.5)) / u_texture_size;
 }

@@ -8,6 +8,7 @@ import {
   validateTexturesHaveSameSize,
   prepareProgramToRenderOutput,
   validateDefined,
+  appendCommonGlsl,
 } from "../webGlUtil";
 
 import { CopyRenderer } from "./copyRenderer";
@@ -25,7 +26,7 @@ export class DiffuseRenderer {
     this.program = createProgramFromSources(
       gl,
       genericVertexShader,
-      diffuseFragmentShader
+      appendCommonGlsl(diffuseFragmentShader)
     );
     this.copyRenderer = new CopyRenderer(gl);
   }

@@ -8,6 +8,7 @@ import {
   validateTexturesHaveSameSize,
   prepareProgramToRenderOutput,
   validateDefined,
+  appendCommonGlsl,
 } from "../webGlUtil";
 
 //export interface DiffuseRendererProps {
@@ -27,7 +28,7 @@ export class AdvectRenderer {
     this.program = createProgramFromSources(
       gl,
       genericVertexShader,
-      advectFragmentShader
+      appendCommonGlsl(advectFragmentShader)
     );
   }
 
