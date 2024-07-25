@@ -40,34 +40,30 @@ export class DiffuseRenderer {
    * The final result will be placed in nextOutputDensity texture.
    */
   render(
-    densityBeforeDiffusion: Texture,
-    tempOutputDensity: Texture,
-    finalOutputDensity: Texture,
+    beforeDiffusion: Texture,
+    tempOutput: Texture,
+    finalOutput: Texture,
     deltaSec: number,
     diffusionRate: number
   ) {
-    validateTexturesHaveSameSize([
-      densityBeforeDiffusion,
-      tempOutputDensity,
-      finalOutputDensity,
-    ]);
+    validateTexturesHaveSameSize([beforeDiffusion, tempOutput, finalOutput]);
     // TODO this first copy is probably not needed
-    this.copyRenderer.render(densityBeforeDiffusion, tempOutputDensity);
-    this.copyRenderer.render(densityBeforeDiffusion, finalOutputDensity);
+    this.copyRenderer.render(beforeDiffusion, tempOutput);
+    this.copyRenderer.render(beforeDiffusion, finalOutput);
 
     // Diffuse applies k=20 times, iteratively (see p.6 of the Paper).
     for (let i = 0; i < 10; i++) {
       this.diffuseOnce(
-        densityBeforeDiffusion,
-        finalOutputDensity,
-        tempOutputDensity,
+        beforeDiffusion,
+        finalOutput,
+        tempOutput,
         deltaSec,
         diffusionRate
       );
       this.diffuseOnce(
-        densityBeforeDiffusion,
-        tempOutputDensity,
-        finalOutputDensity,
+        beforeDiffusion,
+        tempOutput,
+        finalOutput,
         deltaSec,
         diffusionRate
       );
@@ -75,9 +71,9 @@ export class DiffuseRenderer {
   }
 
   private diffuseOnce(
-    initialDensity: Texture,
-    prevOutputDensity: Texture,
-    nextOutputDensity: Texture,
+    initial: Texture,
+    prevOutput: Texture,
+    nextOutput: Texture,
     deltaSec: number,
     diffusionRate: number
   ) {
@@ -85,23 +81,19 @@ export class DiffuseRenderer {
     var program = this.program;
     gl.useProgram(program);
 
-    const vertexCount = prepareProgramToRenderOutput(
-      gl,
-      program,
-      nextOutputDensity
-    );
+    const vertexCount = prepareProgramToRenderOutput(gl, program, nextOutput);
 
     var u_initial_density = gl.getUniformLocation(program, "u_initial_density");
     validateDefined({ u_initial_density });
-    gl.uniform1i(u_initial_density, initialDensity.texture_id);
+    gl.uniform1i(u_initial_density, initial.texture_id);
 
     var u_prev_density = gl.getUniformLocation(program, "u_prev_density");
     validateDefined({ u_prev_density });
-    gl.uniform1i(u_prev_density, prevOutputDensity.texture_id);
+    gl.uniform1i(u_prev_density, prevOutput.texture_id);
 
     var u_texture_size = gl.getUniformLocation(program, "u_texture_size");
     validateDefined({ u_texture_size });
-    gl.uniform2f(u_texture_size, initialDensity.width, initialDensity.height);
+    gl.uniform2f(u_texture_size, initial.width, initial.height);
 
     var u_diff = gl.getUniformLocation(program, "u_diff");
     validateDefined({ u_diff });
