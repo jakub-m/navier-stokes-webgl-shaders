@@ -12,11 +12,6 @@ import {
 
 import { CopyRenderer } from "./copyRenderer";
 
-export interface DiffuseRendererProps {
-  gl: GL;
-  diffusionRate: number;
-}
-
 /**
  * A shader that implements "diffuse" operation from the Paper (see README).
  */
@@ -24,9 +19,8 @@ export class DiffuseRenderer {
   private gl: GL;
   private program: WebGLProgram;
   private copyRenderer: CopyRenderer;
-  diffusionRate: number;
 
-  constructor({ gl, diffusionRate }: DiffuseRendererProps) {
+  constructor(gl: GL) {
     this.gl = gl;
     this.program = createProgramFromSources(
       gl,
@@ -34,7 +28,6 @@ export class DiffuseRenderer {
       diffuseFragmentShader
     );
     this.copyRenderer = new CopyRenderer(gl);
-    this.diffusionRate = diffusionRate;
   }
 
   /**
@@ -50,7 +43,8 @@ export class DiffuseRenderer {
     densityBeforeDiffusion: Texture,
     tempOutputDensity: Texture,
     finalOutputDensity: Texture,
-    deltaSec: number
+    deltaSec: number,
+    diffusionRate: number
   ) {
     validateTexturesHaveSameSize([
       densityBeforeDiffusion,
@@ -67,13 +61,15 @@ export class DiffuseRenderer {
         densityBeforeDiffusion,
         finalOutputDensity,
         tempOutputDensity,
-        deltaSec
+        deltaSec,
+        diffusionRate
       );
       this.diffuseOnce(
         densityBeforeDiffusion,
         tempOutputDensity,
         finalOutputDensity,
-        deltaSec
+        deltaSec,
+        diffusionRate
       );
     }
   }
@@ -82,7 +78,8 @@ export class DiffuseRenderer {
     initialDensity: Texture,
     prevOutputDensity: Texture,
     nextOutputDensity: Texture,
-    deltaSec: number
+    deltaSec: number,
+    diffusionRate: number
   ) {
     const gl = this.gl;
     var program = this.program;
@@ -108,7 +105,7 @@ export class DiffuseRenderer {
 
     var u_diff = gl.getUniformLocation(program, "u_diff");
     validateDefined({ u_diff });
-    gl.uniform1f(u_diff, this.diffusionRate);
+    gl.uniform1f(u_diff, diffusionRate);
 
     var u_dt = gl.getUniformLocation(program, "u_dt");
     validateDefined({ u_dt });

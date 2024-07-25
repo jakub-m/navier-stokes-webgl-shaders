@@ -8,7 +8,6 @@ import { DiffuseRenderer } from "./textureRenderers/diffuseRenderer";
 import { AddRenderer } from "./textureRenderers/addRenderer";
 import { AdvectRenderer } from "./textureRenderers/advectRenderer";
 
-
 const canvasId = "#c";
 const TEXTURE_V_HOR_1 = 0;
 const TEXTURE_V_HOR_2 = 1;
@@ -48,16 +47,22 @@ export const Shader = ({setFps}: ShaderProps) => {
       setFps(1000/deltaMs)
     }
     // TODO do not reset deltaMs if the animation frame was not finished.
-    renderingContextRef.current = render(renderingContextRef.current, deltaMs)
+    const rc = renderingContextRef.current
+    if (rc !== undefined) {
+      renderingContextRef.current = render(rc, deltaMs)
+    }
     requestAnimationFrameRef.current = requestAnimationFrame(animate);
   }, [setFps])
 
   useEffect(() => {
-    // Render GL based on the context set once.
+    // Render GL based on the context once, and repeat in the loop.
     if (run) {
       requestAnimationFrameRef.current = requestAnimationFrame(animate);
     } else {
-      renderingContextRef.current = render(renderingContextRef.current, 0)
+      const rc = renderingContextRef.current
+      if (rc !== undefined) {
+        renderingContextRef.current = render(rc, 0)
+      }
     }
     return () => {
       if (requestAnimationFrameRef.current === undefined) {
@@ -80,7 +85,10 @@ export const Shader = ({setFps}: ShaderProps) => {
   }
 
   const handleClickStep = () => {
-    renderingContextRef.current = render(renderingContextRef.current, 0.100)
+    const rc = renderingContextRef.current
+    if (rc !== undefined) {
+      renderingContextRef.current = render(rc, 0.100)
+    }
   }
 
   const canvas = useMemo(() => {return (<canvas id="c" style={{width: "100%", height: "100%"}} />)}, [])
@@ -143,7 +151,6 @@ const initializeRenderingContext = (): RenderingContext => {
   }
   
   const sourceMagnitude = 10
-  const diffusionRate = 0.1
   const densitySourceValues = Array(width * height).fill(0)
   densitySourceValues[width * (Math.floor(height / 2)) + Math.floor(height / 2)] = sourceMagnitude // initialize single pixel in the middle
 
@@ -160,7 +167,7 @@ const initializeRenderingContext = (): RenderingContext => {
   const textureDensity3 = newTexture(TEXTURE_DENSITY_3).fill(0);
 
   const copyRenderer = new CopyRenderer(gl);
-  const diffuseRenderer = new DiffuseRenderer({gl, diffusionRate});
+  const diffuseRenderer = new DiffuseRenderer(gl);
 
   const canvasRenderer = new CanvasRenderer(gl);
   const addRenderer = new AddRenderer(gl);
@@ -186,12 +193,10 @@ const initializeRenderingContext = (): RenderingContext => {
   }
 }
 
-const render = (c?: RenderingContext, deltaMs: number): RenderingContext | undefined => {
-  if (c === undefined) {
-    return c;
-  }
-
+const render = (c: RenderingContext, deltaMs: number): RenderingContext | undefined => {
   const deltaSec = deltaMs / 1000;
+
+  const diffusionRate = 0.1
 
   const {
     gl,
@@ -259,7 +264,7 @@ const render = (c?: RenderingContext, deltaMs: number): RenderingContext | undef
   // 2. Swap t0 and t1.
   // 3. Combine initial density and t1 to t0.
   // 4. Repeat N times.
-  diffuseRenderer.render(textureDensity1, textureDensity2, textureDensity3, deltaSec)
+  diffuseRenderer.render(textureDensity1, textureDensity2, textureDensity3, deltaSec, diffusionRate)
 
   advectRenderer.render(textureDensity3, textureDensity1, textureHorizontalVelocity1, textureVerticalVelocity1, deltaSec);
 
