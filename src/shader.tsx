@@ -16,7 +16,7 @@ const TEXTURE_V_VER_2 = 3;
 const TEXTURE_SOURCE = 4;
 const TEXTURE_DENSITY_1 = 5;
 const TEXTURE_DENSITY_2 = 6;
-const TEXTURE_DENSITY_3 = 7;
+const TEXTURE_TEMP = 7;
 const TEXTURE_V_HOR_S = 8;
 const TEXTURE_V_VER_S = 9
 
@@ -121,7 +121,8 @@ interface RenderingContext  {
    */
   textureDensity1: Texture
   textureDensity2: Texture
-  textureDensity3: Texture
+
+  textureTemp: Texture
 
   copyRenderer: CopyRenderer
   diffuseRenderer: DiffuseRenderer
@@ -164,7 +165,7 @@ const initializeRenderingContext = (): RenderingContext => {
   const textureVerticalVelocitySource = newTexture(TEXTURE_V_VER_S).fill(-0.1);
   const textureDensity1 = newTexture(TEXTURE_DENSITY_1).fill(0);
   const textureDensity2 = newTexture(TEXTURE_DENSITY_2).fill(0);
-  const textureDensity3 = newTexture(TEXTURE_DENSITY_3).fill(0);
+  const textureTemp = newTexture(TEXTURE_TEMP).fill(0);
 
   const copyRenderer = new CopyRenderer(gl);
   const diffuseRenderer = new DiffuseRenderer(gl);
@@ -189,7 +190,7 @@ const initializeRenderingContext = (): RenderingContext => {
     textureVerticalVelocity2,
     textureDensity1,
     textureDensity2,
-    textureDensity3,
+    textureTemp,
   }
 }
 
@@ -210,12 +211,12 @@ const render = (c: RenderingContext, deltaMs: number): RenderingContext | undefi
     textureVerticalVelocity2,
     textureDensity1,
     textureDensity2,
-    textureDensity3,
     copyRenderer,
     diffuseRenderer,
     advectRenderer,
     canvasRenderer,
     addRenderer,
+    textureTemp,
     // swapTextures,
   } = c
 
@@ -236,7 +237,7 @@ const render = (c: RenderingContext, deltaMs: number): RenderingContext | undefi
 
   ////////////////
   // Density step.
-  // The input and output to the step is textureDensity3, the other density textures are
+  // The input and output to the step is textureDensity2, the other density textures are
   // intermediate buffers.
 
   // From p. 8 of the paper, the density step is as follows (in pseudo-C). I believe that
@@ -251,9 +252,9 @@ const render = (c: RenderingContext, deltaMs: number): RenderingContext | undefi
   //   advect ( N=N, b=0, d=0, d0=x0, u, v, dt );
   // }
 
-  // Here run add_source from the Paper. textureDensity3 is the output from the previous iteration,
+  // Here run add_source from the Paper. textureDensity2 is the output from the previous iteration,
   // and it's copied (with source added) to textureDensity1.
-  addRenderer.render(textureDensitySource, textureDensity3, textureDensity1, deltaSec)
+  addRenderer.render(textureDensitySource, textureDensity2, textureDensity1, deltaSec)
 
   // Here we need to juggle the density textures. Between the frames there is only a single density
   // texture. During the rendering, we need to copy the textures when the shaders modify the textures.
@@ -264,9 +265,9 @@ const render = (c: RenderingContext, deltaMs: number): RenderingContext | undefi
   // 2. Swap t0 and t1.
   // 3. Combine initial density and t1 to t0.
   // 4. Repeat N times.
-  diffuseRenderer.render(textureDensity1, textureDensity2, textureDensity3, deltaSec, diffusionRate)
+  diffuseRenderer.render(textureDensity1, textureTemp, textureDensity2, deltaSec, diffusionRate)
 
-  advectRenderer.render(textureDensity3, textureDensity1, textureHorizontalVelocity1, textureVerticalVelocity1, deltaSec);
+  advectRenderer.render(textureDensity2, textureDensity1, textureHorizontalVelocity1, textureVerticalVelocity1, deltaSec);
 
   /////////////////
   // Velocity step.
@@ -299,15 +300,17 @@ const render = (c: RenderingContext, deltaMs: number): RenderingContext | undefi
     textureVerticalVelocity1,
     deltaSec,
   )
+
   // vel 1 is the input now
+  // diffuseRenderer.render()
 
 
 
   // Rendering to canvas.
-  // By convention where the output density is in textureDensity3
-  copyRenderer.render(textureDensity1, textureDensity3);
+  // By convention where the output density is in textureDensity2
+  copyRenderer.render(textureDensity1, textureDensity2);
   // Preserve the output for the next render cycle.
-  canvasRenderer.render(textureDensity3);
+  canvasRenderer.render(textureDensity2);
 
   const newSync = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
   //if (sync === null) {
