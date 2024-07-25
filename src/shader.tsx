@@ -30,10 +30,10 @@ const swap = <T,>(arr: T[]): void => {
 }
 
 export enum OutputSelector {
-  DENSITY,
-  HORIZONTAL_VELOCITY,
-  VERTICAL_VELOCITY,
-  DENSITY_SOURCE,
+  DENSITY = "DENSITY",
+  HORIZONTAL_VELOCITY = "HORIZONTAL_VELOCITY",
+  VERTICAL_VELOCITY = "VERTICAL_VELOCITY",
+  DENSITY_SOURCE = "DENSITY_SOURCE",
 }
 
 export interface ShaderProps {
@@ -174,13 +174,13 @@ const initializeRenderingContext = ({diffusionRate, viscosity, outputSelector}: 
   viscosity: number,
   outputSelector: OutputSelector
 }): RenderingContext => {
-  const [width, height] = [32, 32]
+  const [width, height] = [32*4, 32*4]
   const gl = initializeGl(canvasId);
   const newTexture = (texture_id: number) => {
     return new Texture({ gl, texture_id, height, width, type: "float" });
   }
   
-  const sourceMagnitude = 100
+  const sourceMagnitude = 10
   const densitySourceValues = Array(width * height).fill(0)
   densitySourceValues[width * (Math.floor(height / 2)) + Math.floor(height / 2)] = sourceMagnitude // initialize single pixel in the middle
 
@@ -188,10 +188,19 @@ const initializeRenderingContext = ({diffusionRate, viscosity, outputSelector}: 
 
   const horizontalVelocity1 = newTexture(TEXTURE_V_HOR_1).fill(0);
   const horizontalVelocity2 = newTexture(TEXTURE_V_HOR_2).fill(0.0);
+
   const verticalVelocity1 = newTexture(TEXTURE_V_VER_1).fill(0);
   const verticalVelocity2 = newTexture(TEXTURE_V_VER_2).fill(0.0);
-  const horizontalVelocitySource = newTexture(TEXTURE_V_HOR_S).fill(0.2);
-  const verticalVelocitySource = newTexture(TEXTURE_V_VER_S).fill(0.2);
+
+  const horizontalVelocitySource = newTexture(TEXTURE_V_HOR_S).setValues(
+    arrayForWH(width, height,
+      (x, y) => x < width / 2 ? 0 : 0.2
+  ));
+  const verticalVelocitySource = newTexture(TEXTURE_V_VER_S).setValues(
+    arrayForWH(width, height,
+      (x, y) => y < height / 2 ? 0 : 0.2
+  ));
+
   const density1 = newTexture(TEXTURE_DENSITY_1).fill(0);
   const density2 = newTexture(TEXTURE_DENSITY_2).fill(0);
   const textureTemp = newTexture(TEXTURE_TEMP).fill(0);
@@ -416,4 +425,15 @@ const render = (c: RenderingContext, deltaMs: number): RenderingContext | undefi
     sync: newSync,
     // swapTextures: !swapTextures,
   };
+}
+
+
+const arrayForWH = (width: number, height: number, func: (x:number, y:number) => number): number[] => {
+  const output = []
+  for (var y = 0; y < height; y++) {
+    for (var x = 0; x < width; x++) {
+      output.push(func(x, y))
+    }
+  }
+  return output
 }

@@ -1,11 +1,11 @@
 import React, {useMemo, useState} from 'react';
 import './App.css';
 import { Shader, OutputSelector } from './shader';
-import { Slider, Select, MenuItem, SelectChangeEvent } from '@mui/material';
+import { Slider, Select, MenuItem, SelectChangeEvent, ToggleButtonGroup, ToggleButton } from '@mui/material';
 
 
 function App() {
-  const [diffusionRate, setDiffusionRate] = useState(0.02)
+  const [diffusionRate, setDiffusionRate] = useState(0.002)
   const [viscosity, setViscosity] = useState(0.01)
   const [fps, setFps] = useState(0)
   const [outputSelector, setOutputSelector] = useState(OutputSelector.DENSITY)
@@ -27,7 +27,7 @@ function App() {
         valueLabelDisplay="auto"
         min={0}
         step={0.001}
-        max={0.5}
+        max={0.2}
         value={diffusionRate}
         onChange={(e) => {
           const t = e.target as HTMLInputElement;
@@ -55,17 +55,29 @@ function App() {
   )
 
   const outputSelect = (
-    <div>
-      <Select value={outputSelector} onChange={
-        (e: SelectChangeEvent<OutputSelector>) => setOutputSelector(e.target.value as OutputSelector)
-        }>
-        <MenuItem value={OutputSelector.DENSITY}>Density</MenuItem>
-        <MenuItem value={OutputSelector.DENSITY_SOURCE}>Density source</MenuItem>
-        <MenuItem value={OutputSelector.HORIZONTAL_VELOCITY}>Horizontal vel.</MenuItem>
-        <MenuItem value={OutputSelector.VERTICAL_VELOCITY}>Vertical vel.</MenuItem>
-      </Select>
-    </div>
+    <ToggleButtonGroup color="primary" value={outputSelector} exclusive onChange={
+      (e) => setOutputSelector(e.target.value as OutputSelector)
+}>
+         <ToggleButton value={OutputSelector.DENSITY}>Density</ToggleButton>
+         <ToggleButton value={OutputSelector.DENSITY_SOURCE}>Density source</ToggleButton>
+         <ToggleButton value={OutputSelector.HORIZONTAL_VELOCITY}>Horiz. vel.</ToggleButton>
+         <ToggleButton value={OutputSelector.VERTICAL_VELOCITY}>Vert. vel.</ToggleButton>
+    </ToggleButtonGroup>
   )
+  /*
+  <ToggleButtonGroup
+  color="primary"
+  value={alignment}
+  exclusive
+  onChange={handleChange}
+  aria-label="Platform"
+>
+  <ToggleButton value="web">Web</ToggleButton>
+  <ToggleButton value="android">Android</ToggleButton>
+  <ToggleButton value="ios">iOS</ToggleButton>
+  </ToggleButtonGroup>
+
+  */
 
   return (
     <div style={{marginLeft: "3em"}}>
