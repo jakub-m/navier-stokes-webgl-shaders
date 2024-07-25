@@ -18,13 +18,15 @@ const TEXTURE_SOURCE = 4;
 const TEXTURE_DENSITY_1 = 5;
 const TEXTURE_DENSITY_2 = 6;
 const TEXTURE_DENSITY_3 = 7;
+const TEXTURE_V_HOR_S = 8;
+const TEXTURE_V_VER_S = 9
 
 export interface ShaderProps {
   setFps?: (fps: number) => void
 }
 
 export const Shader = ({setFps}: ShaderProps) => {
-  const [run, setRun] = useState(false);
+  const [run, setRun] = useState(true); // default run
   const requestAnimationFrameRef = useRef<number>()
   const prevTimeRef = useRef(0)
   const renderingContextRef = useRef<RenderingContext>()
@@ -96,6 +98,9 @@ interface RenderingContext  {
   gl: GL
   /** Density source (S) */
   textureDensitySource: Texture
+  /** Static force field (u0, v0) */
+  textureHorizontalVelocitySource: Texture
+  textureVerticalVelocitySource: Texture
   /** Horizontal velocity (h) */
   textureHorizontalVelocity1: Texture
   textureHorizontalVelocity2: Texture
@@ -137,17 +142,19 @@ const initializeRenderingContext = (): RenderingContext => {
     return new Texture({ gl, texture_id, height, width, type: "float" });
   }
   
-  const sourceMagnitude = 1
-  const diffusionRate = 0.01
+  const sourceMagnitude = 10
+  const diffusionRate = 0.1
   const densitySourceValues = Array(width * height).fill(0)
   densitySourceValues[width * (Math.floor(height / 2)) + Math.floor(height / 2)] = sourceMagnitude // initialize single pixel in the middle
 
   const textureDensitySource = newTexture(TEXTURE_SOURCE).setValues(densitySourceValues)
 
-  const textureHorizontalVelocity1 = newTexture(TEXTURE_V_HOR_1).fill(-0.1);
-  const textureHorizontalVelocity2 = newTexture(TEXTURE_V_HOR_2).fill(0);
-  const textureVerticalVelocity1 = newTexture(TEXTURE_V_VER_1).fill(-0.1);
-  const textureVerticalVelocity2 = newTexture(TEXTURE_V_VER_2).fill(0);
+  const textureHorizontalVelocity1 = newTexture(TEXTURE_V_HOR_1).fill(1);
+  const textureHorizontalVelocity2 = newTexture(TEXTURE_V_HOR_2).fill(1);
+  const textureVerticalVelocity1 = newTexture(TEXTURE_V_VER_1).fill(1);
+  const textureVerticalVelocity2 = newTexture(TEXTURE_V_VER_2).fill(1);
+  const textureHorizontalVelocitySource = newTexture(TEXTURE_V_HOR_S).fill(-0.1);
+  const textureVerticalVelocitySource = newTexture(TEXTURE_V_VER_S).fill(-0.1);
   const textureDensity1 = newTexture(TEXTURE_DENSITY_1).fill(0);
   const textureDensity2 = newTexture(TEXTURE_DENSITY_2).fill(0);
   const textureDensity3 = newTexture(TEXTURE_DENSITY_3).fill(0);
@@ -167,6 +174,8 @@ const initializeRenderingContext = (): RenderingContext => {
     diffuseRenderer,
     advectRenderer,
     textureDensitySource,
+    textureHorizontalVelocitySource,
+    textureVerticalVelocitySource,
     textureHorizontalVelocity1,
     textureHorizontalVelocity2,
     textureVerticalVelocity1,
@@ -188,8 +197,10 @@ const render = (c?: RenderingContext, deltaMs: number): RenderingContext | undef
     gl,
     sync,
     textureDensitySource,
+    textureHorizontalVelocitySource,
     textureHorizontalVelocity1,
     textureHorizontalVelocity2,
+    textureVerticalVelocitySource,
     textureVerticalVelocity1,
     textureVerticalVelocity2,
     textureDensity1,
@@ -237,7 +248,7 @@ const render = (c?: RenderingContext, deltaMs: number): RenderingContext | undef
 
   // Here run add_source from the Paper. textureDensity3 is the output from the previous iteration,
   // and it's copied (with source added) to textureDensity1.
-  addRenderer.render(textureDensitySource, textureDensity3, textureDensity1)
+  addRenderer.render(textureDensitySource, textureDensity3, textureDensity1, deltaSec)
 
   // Here we need to juggle the density textures. Between the frames there is only a single density
   // texture. During the rendering, we need to copy the textures when the shaders modify the textures.
@@ -270,6 +281,22 @@ const render = (c?: RenderingContext, deltaMs: number): RenderingContext | undef
   //   advect ( N, b=2, d=v, d0=v0, u=u0, v=v0, dt );
   //   project ( N, u=u, v=v, p=u0, div=v0 );
   // }
+
+  // By convention, input and output is "2" texture of velocity.
+  addRenderer.render(
+    textureHorizontalVelocity2,
+    textureHorizontalVelocitySource,
+    textureHorizontalVelocity1,
+    deltaSec)
+  addRenderer.render(
+    textureVerticalVelocity2,
+    textureVerticalVelocitySource,
+    textureVerticalVelocity1,
+    deltaSec,
+  )
+  // vel 1 is the input now
+
+
 
   // Rendering to canvas.
   // By convention where the output density is in textureDensity3
