@@ -20,12 +20,21 @@ const TEXTURE_TEMP = 7;
 const TEXTURE_V_HOR_S = 8;
 const TEXTURE_V_VER_S = 9
 
+export enum OutputSelector {
+  DENSITY,
+  HORIZONTAL_VELOCITY,
+  VERTICAL_VELOCITY,
+  DENSITY_SOURCE,
+}
+
 export interface ShaderProps {
   setFps?: (fps: number) => void
   diffusionRate?: number
+  viscosity?: number
+  outputSelector: OutputSelector
 }
 
-export const Shader = ({setFps, diffusionRate = 0.1}: ShaderProps) => {
+export const Shader = ({setFps, diffusionRate = 0.1, viscosity = 0.5, outputSelector = OutputSelector.DENSITY}: ShaderProps) => {
   const [run, setRun] = useState(true); // default run
   const requestAnimationFrameRef = useRef<number>()
   const prevTimeRef = useRef(0)
@@ -35,7 +44,7 @@ export const Shader = ({setFps, diffusionRate = 0.1}: ShaderProps) => {
   useEffect(() => {
     // Initialize GL context once.
     const c = initializeRenderingContext({
-      diffusionRate
+      diffusionRate, viscosity, outputSelector
     });
     renderingContextRef.current = c
   });
@@ -108,6 +117,8 @@ export const Shader = ({setFps, diffusionRate = 0.1}: ShaderProps) => {
 interface RenderingContext  {
   gl: GL
   diffusionRate: number,
+  viscosity: number,
+  outputSelector: OutputSelector,
 
   /** Density source (S) */
   textureDensitySource: Texture
@@ -149,7 +160,11 @@ interface RenderingContext  {
   // swapTextures: boolean
 }
 
-const initializeRenderingContext = ({diffusionRate}: {diffusionRate: number}): RenderingContext => {
+const initializeRenderingContext = ({diffusionRate, viscosity, outputSelector}: {
+  diffusionRate: number,
+  viscosity: number,
+  outputSelector: OutputSelector
+}): RenderingContext => {
   const [width, height] = [32, 32]
   const gl = initializeGl(canvasId);
   const newTexture = (texture_id: number) => {
@@ -197,6 +212,8 @@ const initializeRenderingContext = ({diffusionRate}: {diffusionRate: number}): R
     textureDensity2,
     textureTemp,
     diffusionRate,
+    viscosity,
+    outputSelector,
   }
 }
 
@@ -222,6 +239,8 @@ const render = (c: RenderingContext, deltaMs: number): RenderingContext | undefi
     addRenderer,
     textureTemp,
     diffusionRate,
+    viscosity,
+    outputSelector,
     // swapTextures,
   } = c
 
@@ -306,15 +325,39 @@ const render = (c: RenderingContext, deltaMs: number): RenderingContext | undefi
     deltaSec,
   )
 
-  // vel 1 is the input now
-  // diffuseRenderer.render( )
+  // vel 1 is the previous output
+  diffuseRenderer.render(
+    textureHorizontalVelocity1,
+    textureTemp,
+    textureHorizontalVelocity2,
+    deltaSec,
+    viscosity,
+  )
+  diffuseRenderer.render(
+    textureVerticalVelocity1,
+    textureTemp,
+    textureVerticalVelocity2,
+    deltaSec,
+    viscosity,
+  )
 
+  // vel2 is now the previous output
 
   // Rendering to canvas.
   // By convention where the output density is in textureDensity2
   copyRenderer.render(textureDensity1, textureDensity2);
   // Preserve the output for the next render cycle.
-  canvasRenderer.render(textureDensity2);
+  if (outputSelector === OutputSelector.DENSITY) {
+    canvasRenderer.render(textureDensity2);
+  } else if (outputSelector === OutputSelector.DENSITY_SOURCE) {
+    canvasRenderer.render(textureDensitySource);
+  } else if (outputSelector === OutputSelector.HORIZONTAL_VELOCITY) {
+    canvasRenderer.render(textureHorizontalVelocity2);
+  } else if (outputSelector === OutputSelector.VERTICAL_VELOCITY) {
+    canvasRenderer.render(textureVerticalVelocity2);
+  } else {
+    console.error(`Cannot render output for ${outputSelector}`)
+  }
 
   const newSync = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
   //if (sync === null) {
