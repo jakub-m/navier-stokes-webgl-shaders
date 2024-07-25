@@ -22,9 +22,10 @@ const TEXTURE_V_VER_S = 9
 
 export interface ShaderProps {
   setFps?: (fps: number) => void
+  diffusionRate?: number
 }
 
-export const Shader = ({setFps}: ShaderProps) => {
+export const Shader = ({setFps, diffusionRate = 0.1}: ShaderProps) => {
   const [run, setRun] = useState(true); // default run
   const requestAnimationFrameRef = useRef<number>()
   const prevTimeRef = useRef(0)
@@ -33,7 +34,9 @@ export const Shader = ({setFps}: ShaderProps) => {
 
   useEffect(() => {
     // Initialize GL context once.
-    const c = initializeRenderingContext();
+    const c = initializeRenderingContext({
+      diffusionRate
+    });
     renderingContextRef.current = c
   });
 
@@ -104,6 +107,8 @@ export const Shader = ({setFps}: ShaderProps) => {
 
 interface RenderingContext  {
   gl: GL
+  diffusionRate: number,
+
   /** Density source (S) */
   textureDensitySource: Texture
   /** Static force field (u0, v0) */
@@ -144,25 +149,25 @@ interface RenderingContext  {
   // swapTextures: boolean
 }
 
-const initializeRenderingContext = (): RenderingContext => {
+const initializeRenderingContext = ({diffusionRate}: {diffusionRate: number}): RenderingContext => {
   const [width, height] = [32, 32]
   const gl = initializeGl(canvasId);
   const newTexture = (texture_id: number) => {
     return new Texture({ gl, texture_id, height, width, type: "float" });
   }
   
-  const sourceMagnitude = 10
+  const sourceMagnitude = 5
   const densitySourceValues = Array(width * height).fill(0)
   densitySourceValues[width * (Math.floor(height / 2)) + Math.floor(height / 2)] = sourceMagnitude // initialize single pixel in the middle
 
   const textureDensitySource = newTexture(TEXTURE_SOURCE).setValues(densitySourceValues)
 
-  const textureHorizontalVelocity1 = newTexture(TEXTURE_V_HOR_1).fill(1);
-  const textureHorizontalVelocity2 = newTexture(TEXTURE_V_HOR_2).fill(1);
-  const textureVerticalVelocity1 = newTexture(TEXTURE_V_VER_1).fill(1);
-  const textureVerticalVelocity2 = newTexture(TEXTURE_V_VER_2).fill(1);
-  const textureHorizontalVelocitySource = newTexture(TEXTURE_V_HOR_S).fill(-0.1);
-  const textureVerticalVelocitySource = newTexture(TEXTURE_V_VER_S).fill(-0.1);
+  const textureHorizontalVelocity1 = newTexture(TEXTURE_V_HOR_1).fill(0);
+  const textureHorizontalVelocity2 = newTexture(TEXTURE_V_HOR_2).fill(0.3);
+  const textureVerticalVelocity1 = newTexture(TEXTURE_V_VER_1).fill(0);
+  const textureVerticalVelocity2 = newTexture(TEXTURE_V_VER_2).fill(0.1);
+  const textureHorizontalVelocitySource = newTexture(TEXTURE_V_HOR_S).fill(-0);
+  const textureVerticalVelocitySource = newTexture(TEXTURE_V_VER_S).fill(-0);
   const textureDensity1 = newTexture(TEXTURE_DENSITY_1).fill(0);
   const textureDensity2 = newTexture(TEXTURE_DENSITY_2).fill(0);
   const textureTemp = newTexture(TEXTURE_TEMP).fill(0);
@@ -191,13 +196,12 @@ const initializeRenderingContext = (): RenderingContext => {
     textureDensity1,
     textureDensity2,
     textureTemp,
+    diffusionRate,
   }
 }
 
 const render = (c: RenderingContext, deltaMs: number): RenderingContext | undefined => {
   const deltaSec = deltaMs / 1000;
-
-  const diffusionRate = 0.1
 
   const {
     gl,
@@ -217,6 +221,7 @@ const render = (c: RenderingContext, deltaMs: number): RenderingContext | undefi
     canvasRenderer,
     addRenderer,
     textureTemp,
+    diffusionRate,
     // swapTextures,
   } = c
 
@@ -302,8 +307,7 @@ const render = (c: RenderingContext, deltaMs: number): RenderingContext | undefi
   )
 
   // vel 1 is the input now
-  // diffuseRenderer.render()
-
+  // diffuseRenderer.render( )
 
 
   // Rendering to canvas.
