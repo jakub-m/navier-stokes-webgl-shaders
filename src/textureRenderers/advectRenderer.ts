@@ -33,15 +33,15 @@ export class AdvectRenderer {
   }
 
   render(
-    inputDensity: Texture,
-    finalOutputDensity: Texture,
+    inputValues: Texture,
+    finalOutputValues: Texture,
     horizontalVelocity: Texture,
     verticalVelocity: Texture,
     deltaSec: number
   ) {
     validateTexturesHaveSameSize([
-      inputDensity,
-      finalOutputDensity,
+      inputValues,
+      finalOutputValues,
       horizontalVelocity,
       verticalVelocity,
     ]);
@@ -52,12 +52,12 @@ export class AdvectRenderer {
     const vertexCount = prepareProgramToRenderOutput(
       gl,
       program,
-      finalOutputDensity
+      finalOutputValues
     );
 
     const u_input_density = gl.getUniformLocation(program, "u_input_density");
     validateDefined({ u_input_density });
-    gl.uniform1i(u_input_density, inputDensity.texture_id);
+    gl.uniform1i(u_input_density, inputValues.texture_id);
 
     const u_horizontal_velocity = gl.getUniformLocation(
       program,
@@ -77,8 +77,8 @@ export class AdvectRenderer {
     validateDefined({ u_texture_size });
     gl.uniform2f(
       u_texture_size,
-      finalOutputDensity.width,
-      finalOutputDensity.height
+      finalOutputValues.width,
+      finalOutputValues.height
     );
 
     const u_dt = gl.getUniformLocation(program, "u_dt");

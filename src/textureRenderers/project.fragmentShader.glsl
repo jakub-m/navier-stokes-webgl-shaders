@@ -19,14 +19,20 @@
 //
 //uniform vec2 u_texture_size;
 //uniform float u_dt;
-//
-//float getData(sampler2D source);
-//float getDataAt(sampler2D source, int x, int y);
-//float getDataAtDXDY(sampler2D source, int dx, int dy);
-//vec2 fragCoordToResolution();
-//vec2 resolutionToTextureCoord(vec2 abs_coord);
+
+float getData(sampler2D source);
+float getDataAt(sampler2D source, int x, int y);
+float getDataAtDXDY(sampler2D source, int dx, int dy);
+vec2 fragCoordToResolution();
+vec2 resolutionToTextureCoord(vec2 abs_coord);
 
 // Implement "project" from p.10 of the Paper.
+// The "project" was split into the following parts:
+// 1. Calculate "div"
+// 2. Empty "p"
+// 3. Calculate p based on div
+// 4. Calculate horizontal velocity based on p
+// 5. Calculate vertical velocity based on p
 void main() {
 //void project ( int N, float * u, float * v, float * p, float * div )
 {
@@ -38,29 +44,29 @@ void main() {
 
     for ( i=1 ; i<=N ; i++ ) {
         for ( j=1 ; j<=N ; j++ ) {
-            div[IX(i,j)] = -0.5*h*(u[IX(i+1,j)]-u[IX(i-1,j)]+
-            v[IX(i,j+1)]-v[IX(i,j-1)]);
-            p[IX(i,j)] = 0;
+            div[IX(i,j)] = -0.5 * h * (u[IX(i+1,j)] - u[IX(i-1,j)]+ v[IX(i,j+1)]-v[IX(i,j-1)]);
+            p[ IX(i,j) ] = 0;
         }
     }
 
     set_bnd ( N, 0, div ); set_bnd ( N, 0, p );
-    for ( k=0 ; k<20 ; k++ ) {
-        for ( i=1 ; i<=N ; i++ ) {
-            for ( j=1 ; j<=N ; j++ ) {
-                p[IX(i,j)] = (div[IX(i,j)]+p[IX(i-1,j)]+p[IX(i+1,j)]+
-                p[IX(i,j-1)]+p[IX(i,j+1)])/4;
-            }
-        }
-        set_bnd ( N, 0, p );
-    }
-    for ( i=1 ; i<=N ; i++ ) {
-        for ( j=1 ; j<=N ; j++ ) {
-            u[IX(i,j)] -= 0.5*(p[IX(i+1,j)]-p[IX(i-1,j)])/h;
-            v[IX(i,j)] -= 0.5*(p[IX(i,j+1)]-p[IX(i,j-1)])/h;
-        }
-    }
-    set_bnd ( N, 1, u ); set_bnd ( N, 2, v );
+
+    //for ( k=0 ; k<20 ; k++ ) {
+    //    for ( i=1 ; i<=N ; i++ ) {
+    //        for ( j=1 ; j<=N ; j++ ) {
+    //            p[IX(i,j)] = (div[IX(i,j)]+p[IX(i-1,j)]+p[IX(i+1,j)]+
+    //            p[IX(i,j-1)]+p[IX(i,j+1)])/4;
+    //        }
+    //    }
+    //    set_bnd ( N, 0, p );
+    //}
+    //for ( i=1 ; i<=N ; i++ ) {
+    //    for ( j=1 ; j<=N ; j++ ) {
+    //        u[IX(i,j)] -= 0.5*(p[IX(i+1,j)]-p[IX(i-1,j)])/h;
+    //        v[IX(i,j)] -= 0.5*(p[IX(i,j+1)]-p[IX(i,j-1)])/h;
+    //    }
+    //}
+    //set_bnd ( N, 1, u ); set_bnd ( N, 2, v );
 // }
 
 }

@@ -187,11 +187,11 @@ const initializeRenderingContext = ({diffusionRate, viscosity, outputSelector}: 
   const densitySource = newTexture(TEXTURE_SOURCE).setValues(densitySourceValues)
 
   const horizontalVelocity1 = newTexture(TEXTURE_V_HOR_1).fill(0);
-  const horizontalVelocity2 = newTexture(TEXTURE_V_HOR_2).fill(0.3);
+  const horizontalVelocity2 = newTexture(TEXTURE_V_HOR_2).fill(0.0);
   const verticalVelocity1 = newTexture(TEXTURE_V_VER_1).fill(0);
-  const verticalVelocity2 = newTexture(TEXTURE_V_VER_2).fill(0.1);
-  const horizontalVelocitySource = newTexture(TEXTURE_V_HOR_S).fill(-0);
-  const verticalVelocitySource = newTexture(TEXTURE_V_VER_S).fill(-0);
+  const verticalVelocity2 = newTexture(TEXTURE_V_VER_2).fill(0.0);
+  const horizontalVelocitySource = newTexture(TEXTURE_V_HOR_S).fill(0.2);
+  const verticalVelocitySource = newTexture(TEXTURE_V_VER_S).fill(0.2);
   const density1 = newTexture(TEXTURE_DENSITY_1).fill(0);
   const density2 = newTexture(TEXTURE_DENSITY_2).fill(0);
   const textureTemp = newTexture(TEXTURE_TEMP).fill(0);
@@ -321,6 +321,7 @@ const render = (c: RenderingContext, deltaMs: number): RenderingContext | undefi
   //   diffuse ( N, b=1, x=u, x0=u0, visc, dt );
   //   SWAP ( v0, v );
   //   diffuse ( N, b=2, x=v, x0=v0, visc, dt );
+  //
   //   project ( N, u=u, v=v, p=u0, div=v0 );
   //   SWAP ( u0, u );
   //   SWAP ( v0, v );
@@ -359,8 +360,31 @@ const render = (c: RenderingContext, deltaMs: number): RenderingContext | undefi
     deltaSec,
     viscosity,
   )
-  // MODIFIED DENSITIES
-  // MODIFIED VELOCITIES
+  // SWAP: MODIFIED DENSITIES
+
+  swap(horizontalVelocities)
+  swap(verticalVelocities)
+
+  // TODO 1st project here
+
+  advectRenderer.render(
+    horizontalVelocities[IN],
+    horizontalVelocities[OUT],
+    horizontalVelocities[IN],
+    verticalVelocities[IN],
+    deltaSec,
+  );
+  advectRenderer.render(
+    verticalVelocities[IN],
+    verticalVelocities[OUT],
+    horizontalVelocities[IN],
+    verticalVelocities[IN],
+    deltaSec,
+  )
+
+  // SWAP: MODIFIED VELOCITIES
+
+  // TODO 2nd project here
 
   // Rendering to canvas.
   // By convention where the output density is in density2
