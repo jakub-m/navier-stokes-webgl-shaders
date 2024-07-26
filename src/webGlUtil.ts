@@ -397,7 +397,11 @@ function createShader(
   gl.compileShader(shader);
   var success = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
   if (!success) {
-    console.error("createShader " + name, gl.getShaderInfoLog(shader));
+    console.error(
+      `createShader ${name} ${gl.getShaderInfoLog(
+        shader
+      )}\n\n${annotateLineNumbers(source)}`
+    );
     gl.deleteShader(shader);
   }
   return shader;
@@ -565,4 +569,11 @@ export const validateTexturesHaveSameSize = (textures: Texture[]) => {
 
 export const appendCommonGlsl = (source: string): string => {
   return `${source}\n${commonFS}`;
+};
+
+const annotateLineNumbers = (s: string): string => {
+  return s
+    .split("\n")
+    .map((s, i) => `${i + 1}\t${s}`)
+    .join("\n");
 };

@@ -9,7 +9,6 @@ out vec4 output_color;
 
 uniform sampler2D u_horizontal_velocity;
 uniform sampler2D u_vertical_velocity;
-
 uniform vec2 u_texture_size;
 
 float getData(sampler2D source);
@@ -28,7 +27,6 @@ vec2 resolutionToTextureCoord(vec2 abs_coord);
 
 // Calculate div.
 void main() {
-{
     float width = u_texture_size.x;
     float height = u_texture_size.y;
     float h = 1.0/(width * height);
@@ -41,12 +39,13 @@ void main() {
     //}
 
     float out_div = -0.5 * h * (
-        getDataAtDXDY(u_horizontal_velocity, 1,0) -
-        getDataAtDXDY(u_horizontal_velocity, -1,0) +
+        getDataAtDXDY(u_horizontal_velocity, 1, 0) -
+        getDataAtDXDY(u_horizontal_velocity, -1, 0) +
         getDataAtDXDY(u_vertical_velocity, 0, 1) -
         getDataAtDXDY(u_vertical_velocity, 0, -1));
+    
+    output_color = vec4(out_div, 1, 1, 1);
 
     // set_bnd ( N, 0, div ); // TODO set_bnd for div
     // set_bnd ( N, 0, p ); // TODO set_bnd for p
-
 }

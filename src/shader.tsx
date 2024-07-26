@@ -7,7 +7,7 @@ import { DiffuseRenderer } from "./textureRenderers/diffuseRenderer";
 import { AddRenderer } from "./textureRenderers/addRenderer";
 import { AdvectRenderer } from "./textureRenderers/advectRenderer";
 import { SetSourceAtPosRenderer } from "./textureRenderers/setSourceAtPosRenderer";
-import { unwatchFile } from "fs";
+import { ProjectRenderer } from "./textureRenderers/projectRenderer";
 
 const canvasId = "#c";
 const TEXTURE_V_HOR_1 = 0;
@@ -206,6 +206,7 @@ interface RenderingContext  {
   addRenderer: AddRenderer
   advectRenderer: AdvectRenderer
   setSourceAtPosRenderer: SetSourceAtPosRenderer
+  projectRenderer: ProjectRenderer
 
   /**
    * sync is used to check if the rendering finished. If not, it means that we should not render the
@@ -260,6 +261,7 @@ const initializeRenderingContext = (): RenderingContext => {
   const addRenderer = new AddRenderer(gl);
   const advectRenderer = new AdvectRenderer(gl);
   const setSourceAtPosRenderer = new SetSourceAtPosRenderer(gl)
+  const projectRenderer = new ProjectRenderer(gl)
 
   return {
     gl, copyRenderer, canvasRenderer,
@@ -279,6 +281,7 @@ const initializeRenderingContext = (): RenderingContext => {
     density1,
     density2,
     textureTemp,
+    projectRenderer,
   }
 }
 
@@ -311,6 +314,7 @@ const render = (
     advectRenderer,
     setSourceAtPosRenderer,
     canvasRenderer,
+    projectRenderer,
     addRenderer,
     textureTemp,
   } = rc
@@ -429,10 +433,15 @@ const render = (
     deltaSec,
     viscosity,
   )
-  // SWAP: MODIFIED DENSITIES
 
   swap(horizontalVelocities)
   swap(verticalVelocities)
+
+  // SWAP: MODIFIED DENSITIES
+  projectRenderer.render(horizontalVelocities[IN], verticalVelocities[IN], textureTemp)
+
+  //swap(horizontalVelocities)
+  //swap(verticalVelocities)
 
   // TODO 1st project here
 
