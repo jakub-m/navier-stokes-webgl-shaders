@@ -6,6 +6,8 @@ import { CopyRenderer } from "./textureRenderers/copyRenderer";
 import { DiffuseRenderer } from "./textureRenderers/diffuseRenderer";
 import { AddRenderer } from "./textureRenderers/addRenderer";
 import { AdvectRenderer } from "./textureRenderers/advectRenderer";
+import { SetSourceAtPosRenderer } from "./textureRenderers/setSourceAtPosRenderer";
+import { unwatchFile } from "fs";
 
 const canvasId = "#c";
 const TEXTURE_V_HOR_1 = 0;
@@ -22,11 +24,7 @@ const TEXTURE_V_VER_S = 9;
 const IN = 0
 const OUT = 1
 
-const swap = <T,>(arr: T[]): void => {
-  const [a, b] = [arr[0], arr[1]]
-  arr[0] = b
-  arr[1] = a
-}
+export interface XY {x: number, y: number}
 
 export enum OutputSelector {
   DENSITY = "DENSITY",
@@ -43,12 +41,14 @@ export interface ShaderProps {
   viscosityRef?: React.MutableRefObject<number>
 }
 
+
 export const Shader = ({setFps, diffusionRateRef, viscosityRef, outputSelectorRef}: ShaderProps) => {
   const [run, setRun] = useState(false); // default run
   const requestAnimationFrameRef = useRef<number>()
   const prevTimeRef = useRef(0)
   const renderingContextRef = useRef<RenderingContext>()
   const [pausePlayButton, setPausePlayButton] = useState("play")
+  const mousePosRef = useRef<XY | undefined>()
 
   useEffect(() => {
     // Initialize GL context once.
@@ -69,6 +69,11 @@ export const Shader = ({setFps, diffusionRateRef, viscosityRef, outputSelectorRe
     [viscosityRef]
   )
 
+  const getMousePos = useCallback(
+    () => getRefCurrentOrDefault(mousePosRef, undefined),
+    [mousePosRef]
+  )
+
   const animate = useCallback((timeMs: number) => {
     var deltaMs = 0;
     if (prevTimeRef.current !== 0) {
@@ -86,11 +91,12 @@ export const Shader = ({setFps, diffusionRateRef, viscosityRef, outputSelectorRe
         outputSelector:getOutputSelector(), 
         diffusionRate: getDiffusionRate(),
         viscosity: getViscosity(),
+        sourcePos: getMousePos(),
         deltaMs,
       })
     }
     requestAnimationFrameRef.current = requestAnimationFrame(animate);
-  }, [setFps, getDiffusionRate, getOutputSelector, getViscosity])
+  }, [setFps, getDiffusionRate, getOutputSelector, getViscosity, getMousePos])
 
   useEffect(() => {
     // Render GL based on the context once, and repeat in the loop.
@@ -144,7 +150,9 @@ export const Shader = ({setFps, diffusionRateRef, viscosityRef, outputSelectorRe
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const xy = getRelativePosFromEvent(e)
     if (e.buttons && 1) {
-      console.log(xy, e.button, e.buttons)
+      mousePosRef.current = xy
+    } else {
+      mousePosRef.current = undefined
     }
   }
 
@@ -197,6 +205,7 @@ interface RenderingContext  {
   canvasRenderer: CanvasRenderer
   addRenderer: AddRenderer
   advectRenderer: AdvectRenderer
+  setSourceAtPosRenderer: SetSourceAtPosRenderer
 
   /**
    * sync is used to check if the rendering finished. If not, it means that we should not render the
@@ -213,7 +222,7 @@ interface RenderingContext  {
 }
 
 const initializeRenderingContext = (): RenderingContext => {
-  const [width, height] = [32*1, 32*1]
+  const [width, height] = [32*4, 32*4]
   const gl = initializeGl(canvasId);
   const newTexture = (texture_id: number) => {
     return new Texture({ gl, texture_id, height, width, type: "float" });
@@ -250,6 +259,7 @@ const initializeRenderingContext = (): RenderingContext => {
   const canvasRenderer = new CanvasRenderer(gl);
   const addRenderer = new AddRenderer(gl);
   const advectRenderer = new AdvectRenderer(gl);
+  const setSourceAtPosRenderer = new SetSourceAtPosRenderer(gl)
 
   return {
     gl, copyRenderer, canvasRenderer,
@@ -258,6 +268,7 @@ const initializeRenderingContext = (): RenderingContext => {
     addRenderer,
     diffuseRenderer,
     advectRenderer,
+    setSourceAtPosRenderer,
     densitySource,
     horizontalVelocitySource,
     verticalVelocitySource,
@@ -272,11 +283,12 @@ const initializeRenderingContext = (): RenderingContext => {
 }
 
 const render = (
-  {rc, outputSelector, diffusionRate, viscosity, deltaMs} : {
+  {rc, outputSelector, diffusionRate, viscosity, sourcePos, deltaMs} : {
     rc: RenderingContext,
     outputSelector: OutputSelector,
     diffusionRate: number,
     viscosity: number,
+    sourcePos?: XY,
     deltaMs: number,
   }
 ): RenderingContext | undefined => {
@@ -297,6 +309,7 @@ const render = (
     copyRenderer,
     diffuseRenderer,
     advectRenderer,
+    setSourceAtPosRenderer,
     canvasRenderer,
     addRenderer,
     textureTemp,
@@ -320,6 +333,9 @@ const render = (
   ////////////////
   // Controls step.
   // Apply the user controls, e.g. mouse movement that sets the density source.
+  if (sourcePos !== undefined) {
+    setSourceAtPosRenderer.render(densitySource, sourcePos)
+  }
 
   ////////////////
   // Density step.
@@ -496,9 +512,15 @@ const getRefCurrentOrDefault = <T,>(ref: React.MutableRefObject<T | undefined> |
 /**
  * Return x and y in range [0, 1] relative to the element corner.
  */
-const getRelativePosFromEvent = (e: React.MouseEvent<HTMLCanvasElement>): {x: number, y: number} => {
+const getRelativePosFromEvent = (e: React.MouseEvent<HTMLCanvasElement>): XY => {
     const rect = e.currentTarget.getBoundingClientRect()
     const x = (e.clientX - rect.left) / rect.width;
-    const y = (e.clientY - rect.top) / rect.height;
+    const y = 1.0 - (e.clientY - rect.top) / rect.height;
     return {x, y}
+}
+
+const swap = <T,>(arr: T[]): void => {
+  const [a, b] = [arr[0], arr[1]]
+  arr[0] = b
+  arr[1] = a
 }
