@@ -5,7 +5,7 @@ import { Slider, Select, MenuItem, SelectChangeEvent, ToggleButtonGroup, ToggleB
 
 
 function App() {
-  const [diffusionRate, setDiffusionRate] = useState(0.002)
+  const diffusionRateRef = useRef(0.002)
   const [viscosity, setViscosity] = useState(0.01)
   const [fps, setFps] = useState(0)
   const outputSelectorRef = useRef(OutputSelector.DENSITY)
@@ -13,11 +13,11 @@ function App() {
   const shader = useMemo(() => (
     <Shader
       setFps={setFps}
-      diffusionRate={diffusionRate} 
+      diffusionRateRef={diffusionRateRef} 
       viscosity={viscosity}
       outputSelectorRef={outputSelectorRef}
     />
-  ), [setFps, diffusionRate, viscosity, outputSelectorRef])
+  ), [setFps, diffusionRateRef, viscosity, outputSelectorRef])
 
   const diffusionRateSlider = (
     <>
@@ -28,10 +28,10 @@ function App() {
         min={0}
         step={0.001}
         max={0.2}
-        value={diffusionRate}
+        value={diffusionRateRef.current}
         onChange={(e) => {
           const t = e.target as HTMLInputElement;
-          setDiffusionRate(parseFloat(t.value))
+          diffusionRateRef.current  = parseFloat(t.value)
         }}
       />
     </>
