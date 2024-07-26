@@ -81,7 +81,13 @@ export const Shader = ({setFps, diffusionRateRef, viscosityRef, outputSelectorRe
     // TODO do not reset deltaMs if the animation frame was not finished.
     const rc = renderingContextRef.current
     if (rc !== undefined) {
-      renderingContextRef.current = render(rc, getOutputSelector(), getDiffusionRate(), getViscosity(), deltaMs)
+      renderingContextRef.current = render({
+        rc,
+        outputSelector:getOutputSelector(), 
+        diffusionRate: getDiffusionRate(),
+        viscosity: getViscosity(),
+        deltaMs,
+      })
     }
     requestAnimationFrameRef.current = requestAnimationFrame(animate);
   }, [setFps, getDiffusionRate, getOutputSelector, getViscosity])
@@ -93,7 +99,13 @@ export const Shader = ({setFps, diffusionRateRef, viscosityRef, outputSelectorRe
     } else {
       const rc = renderingContextRef.current
       if (rc !== undefined) {
-        renderingContextRef.current = render(rc, getOutputSelector(), getDiffusionRate(), getViscosity(), 0)
+        renderingContextRef.current = render({
+          rc,
+          outputSelector: getOutputSelector(),
+          diffusionRate: getDiffusionRate(),
+          viscosity: getViscosity(),
+          deltaMs: 0,
+        })
       }
     }
     return () => {
@@ -119,11 +131,31 @@ export const Shader = ({setFps, diffusionRateRef, viscosityRef, outputSelectorRe
   const handleClickStep = () => {
     const rc = renderingContextRef.current
     if (rc !== undefined) {
-      renderingContextRef.current = render(rc, getOutputSelector(), getDiffusionRate(), getViscosity(), 0.100)
+      renderingContextRef.current = render({
+        rc,
+        outputSelector: getOutputSelector(),
+        diffusionRate: getDiffusionRate(),
+        viscosity: getViscosity(),
+        deltaMs: 0.100,
+      })
     }
   }
 
-  const canvas = useMemo(() => {return (<canvas id="c" style={{width: "100%", height: "100%"}} />)}, [])
+  const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const xy = getRelativePosFromEvent(e)
+    if (e.buttons && 1) {
+      console.log(xy, e.button, e.buttons)
+    }
+  }
+
+  const canvas = useMemo(
+    () => <
+      canvas
+      id="c"
+      style={{width: "100%", height: "100%"}}
+      onMouseMove={handleMouseMove}
+      />,
+    [])
   return (
     <>
       <div style={{width: "256px", height: "256px"}}>
@@ -240,11 +272,13 @@ const initializeRenderingContext = (): RenderingContext => {
 }
 
 const render = (
-  c: RenderingContext,
-  outputSelector: OutputSelector,
-  diffusionRate: number,
-  viscosity: number,
-  deltaMs: number,
+  {rc, outputSelector, diffusionRate, viscosity, deltaMs} : {
+    rc: RenderingContext,
+    outputSelector: OutputSelector,
+    diffusionRate: number,
+    viscosity: number,
+    deltaMs: number,
+  }
 ): RenderingContext | undefined => {
   const deltaSec = deltaMs / 1000;
 
@@ -266,8 +300,7 @@ const render = (
     canvasRenderer,
     addRenderer,
     textureTemp,
-    // swapTextures,
-  } = c
+  } = rc
 
   if (sync === null) {
     // console.log("sync is null")
@@ -275,14 +308,18 @@ const render = (
     const syncStatus = gl.getSyncParameter(sync, gl.SYNC_STATUS)
     if (syncStatus === gl.SIGNALED) {
       // console.log("finished")
-      gl.deleteSync(c.sync)
+      gl.deleteSync(rc.sync)
     } else {
       // TODO do not reset interval (ms) to zero when the frame is not finished, rather accumulate
       // the interval.
       console.log("Frame not finished yet")
-      return c;
+      return rc;
    }
   }
+
+  ////////////////
+  // Controls step.
+  // Apply the user controls, e.g. mouse movement that sets the density source.
 
   ////////////////
   // Density step.
@@ -428,7 +465,7 @@ const render = (
   //  console.log("new sync is null")
   //}
   return {
-    ...c,
+    ...rc,
     sync: newSync,
     // swapTextures: !swapTextures,
   };
@@ -454,4 +491,14 @@ const getRefCurrentOrDefault = <T,>(ref: React.MutableRefObject<T | undefined> |
     return default_
   }
   return c
+}
+
+/**
+ * Return x and y in range [0, 1] relative to the element corner.
+ */
+const getRelativePosFromEvent = (e: React.MouseEvent<HTMLCanvasElement>): {x: number, y: number} => {
+    const rect = e.currentTarget.getBoundingClientRect()
+    const x = (e.clientX - rect.left) / rect.width;
+    const y = (e.clientY - rect.top) / rect.height;
+    return {x, y}
 }

@@ -1,8 +1,7 @@
 import React, {useMemo, useRef, useState} from 'react';
 import './App.css';
 import { Shader, OutputSelector } from './shader';
-import { Slider, Select, MenuItem, SelectChangeEvent, ToggleButtonGroup, ToggleButton } from '@mui/material';
-
+import { Slider, ToggleButtonGroup, ToggleButton } from '@mui/material';
 
 function App() {
   const diffusionRateRef = useRef(0.002)
@@ -64,20 +63,6 @@ function App() {
          <ToggleButton value={OutputSelector.VERTICAL_VELOCITY}>Vert. vel.</ToggleButton>
     </ToggleButtonGroup>
   )
-  /*
-  <ToggleButtonGroup
-  color="primary"
-  value={alignment}
-  exclusive
-  onChange={handleChange}
-  aria-label="Platform"
->
-  <ToggleButton value="web">Web</ToggleButton>
-  <ToggleButton value="android">Android</ToggleButton>
-  <ToggleButton value="ios">iOS</ToggleButton>
-  </ToggleButtonGroup>
-
-  */
 
   return (
     <div style={{marginLeft: "3em"}}>
