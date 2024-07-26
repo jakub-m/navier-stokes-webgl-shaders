@@ -40,10 +40,10 @@ export interface ShaderProps {
   setFps?: (fps: number) => void
   diffusionRate?: number
   viscosity?: number
-  outputSelector: OutputSelector
+  outputSelectorRef?: React.MutableRefObject<OutputSelector>
 }
 
-export const Shader = ({setFps, diffusionRate = 0.1, viscosity = 0.5, outputSelector = OutputSelector.DENSITY}: ShaderProps) => {
+export const Shader = ({setFps, diffusionRate = 0.1, viscosity = 0.5, outputSelectorRef}: ShaderProps) => {
   const [run, setRun] = useState(false); // default run
   const requestAnimationFrameRef = useRef<number>()
   const prevTimeRef = useRef(0)
@@ -53,10 +53,20 @@ export const Shader = ({setFps, diffusionRate = 0.1, viscosity = 0.5, outputSele
   useEffect(() => {
     // Initialize GL context once.
     const c = initializeRenderingContext({
-      diffusionRate, viscosity, outputSelector
+      diffusionRate, viscosity
     });
     renderingContextRef.current = c
   });
+
+  const getOutputSelector = (): OutputSelector => {
+    if (outputSelectorRef !== undefined) {
+      const s = outputSelectorRef.current
+      if (s !== undefined) {
+        return s
+      }
+    }
+    return OutputSelector.DENSITY
+  }
 
   const animate = useCallback((timeMs: number) => {
     var deltaMs = 0;
@@ -70,7 +80,7 @@ export const Shader = ({setFps, diffusionRate = 0.1, viscosity = 0.5, outputSele
     // TODO do not reset deltaMs if the animation frame was not finished.
     const rc = renderingContextRef.current
     if (rc !== undefined) {
-      renderingContextRef.current = render(rc, deltaMs)
+      renderingContextRef.current = render(rc, getOutputSelector(), deltaMs)
     }
     requestAnimationFrameRef.current = requestAnimationFrame(animate);
   }, [setFps])
@@ -82,7 +92,7 @@ export const Shader = ({setFps, diffusionRate = 0.1, viscosity = 0.5, outputSele
     } else {
       const rc = renderingContextRef.current
       if (rc !== undefined) {
-        renderingContextRef.current = render(rc, 0)
+        renderingContextRef.current = render(rc, getOutputSelector(), 0)
       }
     }
     return () => {
@@ -108,7 +118,7 @@ export const Shader = ({setFps, diffusionRate = 0.1, viscosity = 0.5, outputSele
   const handleClickStep = () => {
     const rc = renderingContextRef.current
     if (rc !== undefined) {
-      renderingContextRef.current = render(rc, 0.100)
+      renderingContextRef.current = render(rc, getOutputSelector(), 0.100)
     }
   }
 
@@ -127,7 +137,6 @@ interface RenderingContext  {
   gl: GL
   diffusionRate: number,
   viscosity: number,
-  outputSelector: OutputSelector,
 
   /** Density source (S) */
   densitySource: Texture
@@ -169,12 +178,11 @@ interface RenderingContext  {
   // swapTextures: boolean
 }
 
-const initializeRenderingContext = ({diffusionRate, viscosity, outputSelector}: {
+const initializeRenderingContext = ({diffusionRate, viscosity}: {
   diffusionRate: number,
   viscosity: number,
-  outputSelector: OutputSelector
 }): RenderingContext => {
-  const [width, height] = [32*4, 32*4]
+  const [width, height] = [32*1, 32*1]
   const gl = initializeGl(canvasId);
   const newTexture = (texture_id: number) => {
     return new Texture({ gl, texture_id, height, width, type: "float" });
@@ -231,11 +239,10 @@ const initializeRenderingContext = ({diffusionRate, viscosity, outputSelector}: 
     textureTemp,
     diffusionRate,
     viscosity,
-    outputSelector,
   }
 }
 
-const render = (c: RenderingContext, deltaMs: number): RenderingContext | undefined => {
+const render = (c: RenderingContext, outputSelector: OutputSelector, deltaMs: number): RenderingContext | undefined => {
   const deltaSec = deltaMs / 1000;
 
   const {
@@ -258,7 +265,6 @@ const render = (c: RenderingContext, deltaMs: number): RenderingContext | undefi
     textureTemp,
     diffusionRate,
     viscosity,
-    outputSelector,
     // swapTextures,
   } = c
 

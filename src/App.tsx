@@ -1,4 +1,4 @@
-import React, {useMemo, useState} from 'react';
+import React, {useMemo, useRef, useState} from 'react';
 import './App.css';
 import { Shader, OutputSelector } from './shader';
 import { Slider, Select, MenuItem, SelectChangeEvent, ToggleButtonGroup, ToggleButton } from '@mui/material';
@@ -8,16 +8,16 @@ function App() {
   const [diffusionRate, setDiffusionRate] = useState(0.002)
   const [viscosity, setViscosity] = useState(0.01)
   const [fps, setFps] = useState(0)
-  const [outputSelector, setOutputSelector] = useState(OutputSelector.DENSITY)
+  const outputSelectorRef = useRef(OutputSelector.DENSITY)
 
   const shader = useMemo(() => (
     <Shader
       setFps={setFps}
       diffusionRate={diffusionRate} 
       viscosity={viscosity}
-      outputSelector={outputSelector}
+      outputSelectorRef={outputSelectorRef}
     />
-  ), [setFps, diffusionRate, viscosity, outputSelector])
+  ), [setFps, diffusionRate, viscosity, outputSelectorRef])
 
   const diffusionRateSlider = (
     <>
@@ -55,8 +55,8 @@ function App() {
   )
 
   const outputSelect = (
-    <ToggleButtonGroup color="primary" value={outputSelector} exclusive onChange={
-      (e) => setOutputSelector(e.target.value as OutputSelector)
+    <ToggleButtonGroup color="primary" value={outputSelectorRef.current} exclusive onChange={
+      (e) => outputSelectorRef.current = (e.target.value as OutputSelector)
 }>
          <ToggleButton value={OutputSelector.DENSITY}>Density</ToggleButton>
          <ToggleButton value={OutputSelector.DENSITY_SOURCE}>Density source</ToggleButton>
