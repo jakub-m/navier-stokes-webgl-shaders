@@ -1,6 +1,6 @@
 import genericVertexShader from "./generic.vertexShader.glsl";
 import project_1_calc_div_fragmentShader from "./project_1_calc_div.fragmentShader.glsl";
-//import project_2_empty_p_fragmentShader from "./project_2_empty_p.fragmentShader.glsl"
+import project_2_empty_p_fragmentShader from "./project_2_empty_p.fragmentShader.glsl";
 //import project_3_calc_p_from_div_p_fragmentShader from "./project_3_calc_p_from_div_p.fragmentShader.glsl"
 //import project_4_calc_v_hor_from_p_fragmentShader from "./project_4_calc_v_hor_from_p.fragmentShader.glsl"
 //import project_5_calc_v_ver_from_p_fragmentShader from "./project_5_calc_v_ver_from_p.fragmentShader.glsl"
@@ -24,6 +24,7 @@ import {
 export class ProjectRenderer {
   private gl: GL;
   private program1_calcDiv: WebGLProgram;
+  private program2_emptyP: WebGLProgram;
 
   constructor(gl: GL) {
     this.gl = gl;
@@ -32,13 +33,19 @@ export class ProjectRenderer {
       genericVertexShader,
       appendCommonGlsl(project_1_calc_div_fragmentShader)
     );
+
+    this.program2_emptyP = createProgramFromSources(
+      gl,
+      genericVertexShader,
+      project_2_empty_p_fragmentShader
+    );
   }
 
   render(
     inputHorizontalVelocity: Texture, // u
     inputVerticalVelocity: Texture, // v
-    tempDiv: Texture
-    // tempP: Texture,
+    tempDiv: Texture,
+    tempP: Texture
     // outputHorizontalVelocity: Texture,
     // outputVerticalVelocity: Texture,
   ) {
@@ -46,8 +53,10 @@ export class ProjectRenderer {
       inputHorizontalVelocity,
       inputVerticalVelocity,
       tempDiv,
+      tempP,
     ]);
     this.renderCalcDiv(inputHorizontalVelocity, inputVerticalVelocity, tempDiv);
+    this.renderEmptyP(tempP);
   }
 
   private renderCalcDiv(
@@ -58,11 +67,7 @@ export class ProjectRenderer {
     const gl = this.gl;
     const program = this.program1_calcDiv;
     gl.useProgram(program);
-    const vertexCount = prepareProgramToRenderOutput(
-      gl,
-      this.program1_calcDiv,
-      tempDiv
-    );
+    const vertexCount = prepareProgramToRenderOutput(gl, program, tempDiv);
 
     const u_horizontal_velocity = gl.getUniformLocation(
       program,
@@ -86,6 +91,14 @@ export class ProjectRenderer {
       inputHorizontalVelocity.height
     );
 
+    gl.drawArrays(gl.TRIANGLES, 0, vertexCount);
+  }
+
+  private renderEmptyP(tempP: Texture) {
+    const gl = this.gl;
+    const program = this.program2_emptyP;
+    gl.useProgram(program);
+    const vertexCount = prepareProgramToRenderOutput(gl, program, tempP);
     gl.drawArrays(gl.TRIANGLES, 0, vertexCount);
   }
 }

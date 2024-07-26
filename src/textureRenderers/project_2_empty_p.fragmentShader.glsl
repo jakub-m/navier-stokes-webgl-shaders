@@ -9,7 +9,6 @@ out vec4 output_color;
 
 // Empty "p"
 void main() {
-{
     //for ( i=1 ; i<=N ; i++ ) {
     //    for ( j=1 ; j<=N ; j++ ) {
     //        ...
@@ -17,5 +16,5 @@ void main() {
     //    }
     //}
 
-    output_color = vec4(0.0, 0.0, 0.0, 0.0)
+    output_color = vec4(0, 0, 0, 0);
 }

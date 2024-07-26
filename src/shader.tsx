@@ -20,6 +20,7 @@ const TEXTURE_DENSITY_2 = 6;
 const TEXTURE_TEMP = 7;
 const TEXTURE_V_HOR_S = 8;
 const TEXTURE_V_VER_S = 9;
+const TEXTURE_TEMP_2 = 10;
 
 const IN = 0
 const OUT = 1
@@ -199,6 +200,7 @@ interface RenderingContext  {
   density2: Texture
 
   textureTemp: Texture
+  textureTemp2: Texture
 
   copyRenderer: CopyRenderer
   diffuseRenderer: DiffuseRenderer
@@ -253,6 +255,7 @@ const initializeRenderingContext = (): RenderingContext => {
   const density1 = newTexture(TEXTURE_DENSITY_1).fill(0);
   const density2 = newTexture(TEXTURE_DENSITY_2).fill(0);
   const textureTemp = newTexture(TEXTURE_TEMP).fill(0);
+  const textureTemp2 = newTexture(TEXTURE_TEMP_2).fill(0);
 
   const copyRenderer = new CopyRenderer(gl);
   const diffuseRenderer = new DiffuseRenderer(gl);
@@ -281,6 +284,7 @@ const initializeRenderingContext = (): RenderingContext => {
     density1,
     density2,
     textureTemp,
+    textureTemp2,
     projectRenderer,
   }
 }
@@ -317,6 +321,7 @@ const render = (
     projectRenderer,
     addRenderer,
     textureTemp,
+    textureTemp2,
   } = rc
 
   if (sync === null) {
@@ -438,7 +443,7 @@ const render = (
   swap(verticalVelocities)
 
   // SWAP: MODIFIED DENSITIES
-  projectRenderer.render(horizontalVelocities[IN], verticalVelocities[IN], textureTemp)
+  projectRenderer.render(horizontalVelocities[IN], verticalVelocities[IN], textureTemp, textureTemp2)
 
   //swap(horizontalVelocities)
   //swap(verticalVelocities)
