@@ -83,11 +83,11 @@ export class ProjectRenderer {
     this.renderCalcDiv(inputHorizontalVelocity, inputVerticalVelocity, tempDiv);
     this.renderEmptyP(tempPIn);
     const tempP = this.renderCalcPFromDiv(tempDiv, tempPIn, tempPOut);
-    this.renderCalcHorizontalVelocity(
-      inputHorizontalVelocity,
-      tempP,
-      outputHorizontalVelocity
-    );
+    //this.renderCalcHorizontalVelocity(
+    //  inputHorizontalVelocity,
+    //  tempP,
+    //  outputHorizontalVelocity
+    //);
   }
 
   private renderCalcDiv(

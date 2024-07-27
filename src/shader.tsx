@@ -47,7 +47,6 @@ export interface ShaderProps {
 export const Shader = ({setFps, diffusionRateRef, viscosityRef, outputSelectorRef}: ShaderProps) => {
   const [run, setRun] = useState(false); // default run
   const requestAnimationFrameRef = useRef<number>()
-  const prevTimeRef = useRef(0)
   const renderingContextRef = useRef<RenderingContext>()
   const [pausePlayButton, setPausePlayButton] = useState("play")
   const mousePosRef = useRef<XY | undefined>()
@@ -76,45 +75,41 @@ export const Shader = ({setFps, diffusionRateRef, viscosityRef, outputSelectorRe
     [mousePosRef]
   )
 
-  const animate = useCallback((timeMs: number) => {
-    var deltaMs = 0;
-    if (prevTimeRef.current !== 0) {
-      deltaMs = timeMs - prevTimeRef.current
-    }
-    prevTimeRef.current = timeMs
-    if (setFps) {
-      setFps(1000/deltaMs)
-    }
+  const animate = useCallback((frameTimeMs: number) => {
+    //var deltaMs = 0;
+    //if (prevTimeRef.current !== 0) {
+    //  deltaMs = timeMs - prevTimeRef.current
+    //}
+    //prevTimeRef.current = timeMs
+    //if (setFps) {
+    //  setFps(1000/deltaMs)
+    //}
     // TODO do not reset deltaMs if the animation frame was not finished.
-    const rc = renderingContextRef.current
+    var rc = renderingContextRef.current
     if (rc !== undefined) {
-      renderingContextRef.current = render({
+      const t0 = rc.prevFrameTime
+      rc = render({
         rc,
         outputSelector:getOutputSelector(), 
         diffusionRate: getDiffusionRate(),
         viscosity: getViscosity(),
         sourcePos: getMousePos(),
-        deltaMs,
+        frameTimeMs,
       })
+      renderingContextRef.current = rc
+      if (setFps !== undefined && rc?.frameInProgress === false && t0 !== undefined) {
+        setFps(1000/(frameTimeMs - t0))
+      }
     }
     requestAnimationFrameRef.current = requestAnimationFrame(animate);
-  }, [setFps, getDiffusionRate, getOutputSelector, getViscosity, getMousePos])
+  }, [getDiffusionRate, getOutputSelector, getViscosity, getMousePos, setFps])
 
   useEffect(() => {
     // Render GL based on the context once, and repeat in the loop.
     if (run) {
       requestAnimationFrameRef.current = requestAnimationFrame(animate);
     } else {
-      const rc = renderingContextRef.current
-      if (rc !== undefined) {
-        renderingContextRef.current = render({
-          rc,
-          outputSelector: getOutputSelector(),
-          diffusionRate: getDiffusionRate(),
-          viscosity: getViscosity(),
-          deltaMs: 0,
-        })
-      }
+      console.log('No run')
     }
     return () => {
       if (requestAnimationFrameRef.current === undefined) {
@@ -122,7 +117,7 @@ export const Shader = ({setFps, diffusionRateRef, viscosityRef, outputSelectorRe
       }
       cancelAnimationFrame(requestAnimationFrameRef.current)
     };
-  }, [animate, run, getDiffusionRate, getOutputSelector, getViscosity]);
+  }, [animate, run]);
 
   const handleClickPlay = () => {
     if (run) {
@@ -144,7 +139,7 @@ export const Shader = ({setFps, diffusionRateRef, viscosityRef, outputSelectorRe
         outputSelector: getOutputSelector(),
         diffusionRate: getDiffusionRate(),
         viscosity: getViscosity(),
-        deltaMs: 0.100,
+        frameTimeMs: (rc.prevFrameTime || 0) + 100,
       })
     }
   }
@@ -178,9 +173,15 @@ export const Shader = ({setFps, diffusionRateRef, viscosityRef, outputSelectorRe
 
 /**
  * Rendering context lives across rendering frames.
+ * 
+ * @param prevFrameTime the time of the previous finished animation frame.
+ * @param frameInProgress tells if the rendering is still in progress, or had finished.
  */
 interface RenderingContext  {
   gl: GL
+
+  prevFrameTime?: number
+  frameInProgress: boolean
 
   /** Density source (S) */
   densitySource: Texture
@@ -290,23 +291,23 @@ const initializeRenderingContext = (): RenderingContext => {
     textureTemp2,
     textureTemp3,
     projectRenderer,
+    frameInProgress: false,
   }
 }
 
 const render = (
-  {rc, outputSelector, diffusionRate, viscosity, sourcePos, deltaMs} : {
+  {rc, outputSelector, diffusionRate, viscosity, sourcePos, frameTimeMs} : {
     rc: RenderingContext,
     outputSelector: OutputSelector,
     diffusionRate: number,
     viscosity: number,
     sourcePos?: XY,
-    deltaMs: number,
+    frameTimeMs: number,
   }
 ): RenderingContext | undefined => {
-  const deltaSec = deltaMs / 1000;
-
   const {
     gl,
+    prevFrameTime,
     sync,
     densitySource,
     horizontalVelocitySource,
@@ -340,8 +341,15 @@ const render = (
       // TODO do not reset interval (ms) to zero when the frame is not finished, rather accumulate
       // the interval.
       // console.log("Frame not finished yet")
-      return rc;
+      // When render is called, the previous rendering might not have finished yet.
+      return {...rc, frameInProgress: true};
    }
+  }
+
+  // Update prevFrameTime only when the previous animation frame have finished.
+  var deltaSec = 0.01
+  if (prevFrameTime !== undefined ) {
+    deltaSec = (frameTimeMs - prevFrameTime) / 1000
   }
 
   ////////////////
@@ -510,6 +518,8 @@ const render = (
   return {
     ...rc,
     sync: newSync,
+    prevFrameTime: frameTimeMs,
+    frameInProgress: false,
     // swapTextures: !swapTextures,
   };
 }
