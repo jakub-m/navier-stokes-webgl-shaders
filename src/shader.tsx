@@ -361,7 +361,13 @@ const render = (
   ////////////////
   // Controls step.
   // Apply the user controls, e.g. mouse movement that sets the density source.
-  if (sourcePos !== undefined) {
+  if (sourcePos === undefined) {
+    // Clean the source
+    const p = {x: 0.5, y: 0.5}
+    setCircleAtPosRenderer.render(densitySource, p, 0)
+    setCircleAtPosRenderer.render(horizontalVelocitySource, p, 0)
+    setCircleAtPosRenderer.render(verticalVelocitySource, p, 0)
+  } else {
     setCircleAtPosRenderer.render(densitySource, sourcePos)
     setCircleAtPosRenderer.render(horizontalVelocitySource, sourcePos)
     setCircleAtPosRenderer.render(verticalVelocitySource, sourcePos)

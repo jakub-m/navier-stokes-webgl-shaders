@@ -10,6 +10,8 @@ import {
   validateDefined,
 } from "../webGlUtil";
 
+const defaultRelativeRadius = 0.1;
+
 /**
  * A renderer that sets a circle, e.g. a diffusion source at some specific position,
  * e.g. from user input.
@@ -27,17 +29,25 @@ export class SetCircleAtPosRenderer {
     );
   }
 
-  render(output: Texture, relativePos: { x: number; y: number }) {
+  render(
+    output: Texture,
+    relativePos: { x: number; y: number },
+    relativeRadius?: number
+  ) {
     validateTexturesHaveSameSize([output]);
     const gl = this.gl;
     var program = this.program;
     gl.useProgram(program);
 
+    if (relativeRadius === undefined) {
+      relativeRadius = defaultRelativeRadius;
+    }
+
     const vertexCount = prepareProgramToRenderOutput(gl, program, output);
 
     var u_relative_radius = gl.getUniformLocation(program, "u_relative_radius");
     validateDefined({ u_relative_radius });
-    gl.uniform1f(u_relative_radius, 0.1);
+    gl.uniform1f(u_relative_radius, relativeRadius);
 
     var u_relative_pos = gl.getUniformLocation(program, "u_relative_pos");
     validateDefined({ u_relative_pos });
