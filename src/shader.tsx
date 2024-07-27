@@ -6,7 +6,7 @@ import { CopyRenderer } from "./textureRenderers/copyRenderer";
 import { DiffuseRenderer } from "./textureRenderers/diffuseRenderer";
 import { AddRenderer } from "./textureRenderers/addRenderer";
 import { AdvectRenderer } from "./textureRenderers/advectRenderer";
-import { SetCircleAtPosRenderer } from "./textureRenderers/seCircleAtPosRenderer";
+import { SetCircleAtPosRenderer } from "./textureRenderers/setCircleAtPosRenderer";
 import { ProjectRenderer } from "./textureRenderers/projectRenderer";
 
 const canvasId = "#c";
@@ -26,6 +26,10 @@ const TEXTURE_TEMP_3 = 11;
 const IN = 0
 const OUT = 1
 
+const defaultWidth = 128
+const defaultHeight = 128
+
+
 export interface XY {x: number, y: number}
 
 export enum OutputSelector {
@@ -41,10 +45,11 @@ export interface ShaderProps {
   outputSelectorRef?: React.MutableRefObject<OutputSelector>
   diffusionRateRef?: React.MutableRefObject<number>
   viscosityRef?: React.MutableRefObject<number>
+  width?: number
+  height?: number
 }
 
-
-export const Shader = ({setFps, diffusionRateRef, viscosityRef, outputSelectorRef}: ShaderProps) => {
+export const Shader = ({setFps, diffusionRateRef, viscosityRef, outputSelectorRef, width=defaultWidth, height=defaultHeight}: ShaderProps) => {
   const [run, setRun] = useState(false); // default run
   const requestAnimationFrameRef = useRef<number>()
   const renderingContextRef = useRef<RenderingContext>()
@@ -53,7 +58,7 @@ export const Shader = ({setFps, diffusionRateRef, viscosityRef, outputSelectorRe
 
   useEffect(() => {
     // Initialize GL context once.
-    const c = initializeRenderingContext();
+    const c = initializeRenderingContext({width, height});
     renderingContextRef.current = c
   });
 
@@ -227,8 +232,7 @@ interface RenderingContext  {
   // swapTextures: boolean
 }
 
-const initializeRenderingContext = (): RenderingContext => {
-  const [width, height] = [32*4, 32*4]
+const initializeRenderingContext = ({width, height}: {width: number, height: number}): RenderingContext => {
   const gl = initializeGl(canvasId);
   const newTexture = (texture_id: number) => {
     return new Texture({ gl, texture_id, height, width, type: "float" });
