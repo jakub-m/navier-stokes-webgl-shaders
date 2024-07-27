@@ -246,14 +246,16 @@ const initializeRenderingContext = (): RenderingContext => {
   const verticalVelocity1 = newTexture(TEXTURE_V_VER_1).fill(0);
   const verticalVelocity2 = newTexture(TEXTURE_V_VER_2).fill(0.0);
 
-  const horizontalVelocitySource = newTexture(TEXTURE_V_HOR_S).setValues(
-    arrayForWH(width, height,
-      (x, y) => x < width / 2 ? 0 : 0.2
-  ));
-  const verticalVelocitySource = newTexture(TEXTURE_V_VER_S).setValues(
-    arrayForWH(width, height,
-      (x, y) => y < height / 2 ? 0 : 0.2
-  ));
+  const horizontalVelocitySource = newTexture(TEXTURE_V_HOR_S).fill(0);
+  //const horizontalVelocitySource = newTexture(TEXTURE_V_HOR_S).setValues(
+  //  arrayForWH(width, height,
+  //    (x, y) => x < width / 2 ? 0 : 0.2
+  //));
+  const verticalVelocitySource = newTexture(TEXTURE_V_VER_S).fill(0)
+  //const verticalVelocitySource = newTexture(TEXTURE_V_VER_S).setValues(
+  //  arrayForWH(width, height,
+  //    (x, y) => y < height / 2 ? 0 : 0.2
+  //));
 
   const density1 = newTexture(TEXTURE_DENSITY_1).fill(0);
   const density2 = newTexture(TEXTURE_DENSITY_2).fill(0);
@@ -357,6 +359,8 @@ const render = (
   // Apply the user controls, e.g. mouse movement that sets the density source.
   if (sourcePos !== undefined) {
     setCircleAtPosRenderer.render(densitySource, sourcePos)
+    setCircleAtPosRenderer.render(horizontalVelocitySource, sourcePos)
+    setCircleAtPosRenderer.render(verticalVelocitySource, sourcePos)
   }
 
   ////////////////
