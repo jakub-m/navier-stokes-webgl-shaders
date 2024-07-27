@@ -8,6 +8,7 @@ import { AddRenderer } from "./textureRenderers/addRenderer";
 import { AdvectRenderer } from "./textureRenderers/advectRenderer";
 import { SetCircleAtPosRenderer } from "./textureRenderers/setCircleAtPosRenderer";
 import { ProjectRenderer } from "./textureRenderers/projectRenderer";
+import { SetVelocityRenderer } from "./textureRenderers/setVelocityRenderer";
 
 const canvasId = "#c";
 const TEXTURE_V_HOR_1 = 0;
@@ -235,6 +236,7 @@ interface RenderingContext  {
   advectRenderer: AdvectRenderer
   setCircleAtPosRenderer: SetCircleAtPosRenderer
   projectRenderer: ProjectRenderer
+  setVelocityRenderer: SetVelocityRenderer
 
   /**
    * sync is used to check if the rendering finished. If not, it means that we should not render the
@@ -293,6 +295,7 @@ const initializeRenderingContext = ({width, height}: {width: number, height: num
   const advectRenderer = new AdvectRenderer(gl);
   const setCircleAtPosRenderer = new SetCircleAtPosRenderer(gl)
   const projectRenderer = new ProjectRenderer(gl)
+  const setVelocityRenderer = new SetVelocityRenderer(gl)
 
   return {
     gl, copyRenderer, canvasRenderer,
@@ -315,6 +318,7 @@ const initializeRenderingContext = ({width, height}: {width: number, height: num
     textureTemp2,
     textureTemp3,
     projectRenderer,
+    setVelocityRenderer,
     frameInProgress: false,
   }
 }
@@ -348,6 +352,7 @@ const render = (
     setCircleAtPosRenderer,
     canvasRenderer,
     projectRenderer,
+    setVelocityRenderer,
     addRenderer,
     textureTemp,
     textureTemp2,
@@ -385,10 +390,16 @@ const render = (
     cleanTexture(horizontalVelocitySource)
     cleanTexture(verticalVelocitySource)
   } else {
-    const sourcePos = movement.pCurr
-    setCircleAtPosRenderer.render(densitySource, sourcePos)
-    setCircleAtPosRenderer.render(horizontalVelocitySource, sourcePos)
-    setCircleAtPosRenderer.render(verticalVelocitySource, sourcePos)
+    const currPos = movement.pCurr
+    setCircleAtPosRenderer.render(densitySource, currPos)
+    const prevPos = movement.pPrev
+    if (prevPos !== undefined) {
+      const prevXY = {x: prevPos.x, y: prevPos.y}
+      const currXY = {x: currPos.x, y: currPos.y}
+      setVelocityRenderer.render(horizontalVelocitySource, prevXY, prevPos.tSec, currXY, currPos.tSec)
+      setVelocityRenderer.render(verticalVelocitySource, prevXY, prevPos.tSec, currXY, currPos.tSec)
+      console.log("x", currPos.x - prevPos.x, "y", currPos.y - prevPos.y, "t", currPos.tSec - prevPos.tSec)
+    }
   }
 
   ////////////////
