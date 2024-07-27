@@ -32,6 +32,16 @@ const defaultHeight = 128
 
 export interface XY {x: number, y: number}
 
+/**
+ * XY with time (in ms)
+ */
+interface XYT {x: number, y: number, tSec: number}
+
+interface Movement {
+  pPrev?: XYT
+  pCurr: XYT
+}
+
 export enum OutputSelector {
   DENSITY = "DENSITY",
   HORIZONTAL_VELOCITY = "HORIZONTAL_VELOCITY",
@@ -54,7 +64,8 @@ export const Shader = ({setFps, diffusionRateRef, viscosityRef, outputSelectorRe
   const requestAnimationFrameRef = useRef<number>()
   const renderingContextRef = useRef<RenderingContext>()
   const [pausePlayButton, setPausePlayButton] = useState("play")
-  const mousePosRef = useRef<XY | undefined>()
+   // If mouseMovementRef is undefined, then there is no button pressed.
+  const mouseMovementRef = useRef<Movement | undefined>()
 
   useEffect(() => {
     // Initialize GL context once.
@@ -75,9 +86,9 @@ export const Shader = ({setFps, diffusionRateRef, viscosityRef, outputSelectorRe
     [viscosityRef]
   )
 
-  const getMousePos = useCallback(
-    () => getRefCurrentOrDefault(mousePosRef, undefined),
-    [mousePosRef]
+  const getMouseMovement = useCallback(
+    () => getRefCurrentOrDefault(mouseMovementRef, undefined),
+    [mouseMovementRef]
   )
 
   const animate = useCallback((frameTimeMs: number) => {
@@ -98,7 +109,7 @@ export const Shader = ({setFps, diffusionRateRef, viscosityRef, outputSelectorRe
         outputSelector:getOutputSelector(), 
         diffusionRate: getDiffusionRate(),
         viscosity: getViscosity(),
-        sourcePos: getMousePos(),
+        movement: getMouseMovement(),
         frameTimeMs,
       })
       renderingContextRef.current = rc
@@ -107,7 +118,7 @@ export const Shader = ({setFps, diffusionRateRef, viscosityRef, outputSelectorRe
       }
     }
     requestAnimationFrameRef.current = requestAnimationFrame(animate);
-  }, [getDiffusionRate, getOutputSelector, getViscosity, getMousePos, setFps])
+  }, [getDiffusionRate, getOutputSelector, getViscosity, getMouseMovement, setFps])
 
   useEffect(() => {
     // Render GL based on the context once, and repeat in the loop.
@@ -150,11 +161,18 @@ export const Shader = ({setFps, diffusionRateRef, viscosityRef, outputSelectorRe
   }
 
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    const xy = getRelativePosFromEvent(e)
+    const tSec = (new Date()).getTime() / 1000
+    const {x, y} = getRelativePosFromEvent(e)
     if (e.buttons && 1) {
-      mousePosRef.current = xy
+      const c = mouseMovementRef.current
+      if (c === undefined) {
+        mouseMovementRef.current = {pCurr: {x, y, tSec}}
+      } else {
+        const pPrev = c.pCurr
+        mouseMovementRef.current = {pPrev, pCurr: {x, y, tSec}}
+      }
     } else {
-      mousePosRef.current = undefined
+      mouseMovementRef.current = undefined
     }
   }
 
@@ -302,12 +320,12 @@ const initializeRenderingContext = ({width, height}: {width: number, height: num
 }
 
 const render = (
-  {rc, outputSelector, diffusionRate, viscosity, sourcePos, frameTimeMs} : {
+  {rc, outputSelector, diffusionRate, viscosity, movement, frameTimeMs} : {
     rc: RenderingContext,
     outputSelector: OutputSelector,
     diffusionRate: number,
     viscosity: number,
-    sourcePos?: XY,
+    movement?: Movement,
     frameTimeMs: number,
   }
 ): RenderingContext | undefined => {
@@ -344,10 +362,8 @@ const render = (
       // console.log("finished")
       gl.deleteSync(rc.sync)
     } else {
-      // TODO do not reset interval (ms) to zero when the frame is not finished, rather accumulate
-      // the interval.
-      // console.log("Frame not finished yet")
       // When render is called, the previous rendering might not have finished yet.
+      // console.log("Frame not finished yet")
       return {...rc, frameInProgress: true};
    }
   }
@@ -361,13 +377,15 @@ const render = (
   ////////////////
   // Controls step.
   // Apply the user controls, e.g. mouse movement that sets the density source.
-  if (sourcePos === undefined) {
-    // Clean the source
-    const p = {x: 0.5, y: 0.5}
-    setCircleAtPosRenderer.render(densitySource, p, 0)
-    setCircleAtPosRenderer.render(horizontalVelocitySource, p, 0)
-    setCircleAtPosRenderer.render(verticalVelocitySource, p, 0)
+  if (movement === undefined) {
+    const cleanTexture = (tex: Texture) => {
+      setCircleAtPosRenderer.render(tex, {x: 0.5, y: 0.5}, 0)
+    }
+    cleanTexture(densitySource)
+    cleanTexture(horizontalVelocitySource)
+    cleanTexture(verticalVelocitySource)
   } else {
+    const sourcePos = movement.pCurr
     setCircleAtPosRenderer.render(densitySource, sourcePos)
     setCircleAtPosRenderer.render(horizontalVelocitySource, sourcePos)
     setCircleAtPosRenderer.render(verticalVelocitySource, sourcePos)
