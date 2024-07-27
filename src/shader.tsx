@@ -468,8 +468,6 @@ const render = (
   swap(horizontalVelocities)
   swap(verticalVelocities)
 
-  // TODO 1st project here
-
   advectRenderer.render(
     horizontalVelocities[IN],
     horizontalVelocities[OUT],

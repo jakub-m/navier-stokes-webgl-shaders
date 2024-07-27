@@ -83,11 +83,11 @@ export class ProjectRenderer {
     this.renderCalcDiv(inputHorizontalVelocity, inputVerticalVelocity, tempDiv);
     this.renderEmptyP(tempPIn);
     const tempP = this.renderCalcPFromDiv(tempDiv, tempPIn, tempPOut);
-    //this.renderCalcHorizontalVelocity(
-    //  inputHorizontalVelocity,
-    //  tempP,
-    //  outputHorizontalVelocity
-    //);
+    this.renderCalcHorizontalVelocity(
+      inputHorizontalVelocity,
+      tempP,
+      outputHorizontalVelocity
+    );
   }
 
   private renderCalcDiv(
@@ -194,9 +194,9 @@ export class ProjectRenderer {
       "u_horizontal_velocity"
     );
     validateDefined({ u_horizontal_velocity });
+    gl.uniform1i(u_horizontal_velocity, horizontalVelocityIn.texture_id);
 
     const u_p = gl.getUniformLocation(program, "u_p");
-    gl.uniform1i(u_horizontal_velocity, horizontalVelocityIn.texture_id);
     validateDefined({ u_p });
     gl.uniform1i(u_p, tempP.texture_id);
 
