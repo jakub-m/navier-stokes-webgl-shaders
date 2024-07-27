@@ -1,4 +1,4 @@
-import setSourceAtPosFragmentShader from "./setSourceAtPos.fragmentShader.glsl";
+import setCircleAtPosFragmentShader from "./setCircleAtPos.fragmentShader.glsl";
 import genericVertexShader from "./generic.vertexShader.glsl";
 
 import {
@@ -11,10 +11,10 @@ import {
 } from "../webGlUtil";
 
 /**
- * A renderer that sets the diffusion source at some specific position,
+ * A renderer that sets a circle, e.g. a diffusion source at some specific position,
  * e.g. from user input.
  */
-export class SetSourceAtPosRenderer {
+export class SetCircleAtPosRenderer {
   private gl: GL;
   private program: WebGLProgram;
 
@@ -23,7 +23,7 @@ export class SetSourceAtPosRenderer {
     this.program = createProgramFromSources(
       gl,
       genericVertexShader,
-      setSourceAtPosFragmentShader
+      setCircleAtPosFragmentShader
     );
   }
 

@@ -6,7 +6,7 @@ import { CopyRenderer } from "./textureRenderers/copyRenderer";
 import { DiffuseRenderer } from "./textureRenderers/diffuseRenderer";
 import { AddRenderer } from "./textureRenderers/addRenderer";
 import { AdvectRenderer } from "./textureRenderers/advectRenderer";
-import { SetSourceAtPosRenderer } from "./textureRenderers/setSourceAtPosRenderer";
+import { SetCircleAtPosRenderer } from "./textureRenderers/seCircleAtPosRenderer";
 import { ProjectRenderer } from "./textureRenderers/projectRenderer";
 
 const canvasId = "#c";
@@ -210,7 +210,7 @@ interface RenderingContext  {
   canvasRenderer: CanvasRenderer
   addRenderer: AddRenderer
   advectRenderer: AdvectRenderer
-  setSourceAtPosRenderer: SetSourceAtPosRenderer
+  setCircleAtPosRenderer: SetCircleAtPosRenderer
   projectRenderer: ProjectRenderer
 
   /**
@@ -267,7 +267,7 @@ const initializeRenderingContext = (): RenderingContext => {
   const canvasRenderer = new CanvasRenderer(gl);
   const addRenderer = new AddRenderer(gl);
   const advectRenderer = new AdvectRenderer(gl);
-  const setSourceAtPosRenderer = new SetSourceAtPosRenderer(gl)
+  const setCircleAtPosRenderer = new SetCircleAtPosRenderer(gl)
   const projectRenderer = new ProjectRenderer(gl)
 
   return {
@@ -277,7 +277,7 @@ const initializeRenderingContext = (): RenderingContext => {
     addRenderer,
     diffuseRenderer,
     advectRenderer,
-    setSourceAtPosRenderer,
+    setCircleAtPosRenderer,
     densitySource,
     horizontalVelocitySource,
     verticalVelocitySource,
@@ -321,7 +321,7 @@ const render = (
     copyRenderer,
     diffuseRenderer,
     advectRenderer,
-    setSourceAtPosRenderer,
+    setCircleAtPosRenderer,
     canvasRenderer,
     projectRenderer,
     addRenderer,
@@ -356,7 +356,7 @@ const render = (
   // Controls step.
   // Apply the user controls, e.g. mouse movement that sets the density source.
   if (sourcePos !== undefined) {
-    setSourceAtPosRenderer.render(densitySource, sourcePos)
+    setCircleAtPosRenderer.render(densitySource, sourcePos)
   }
 
   ////////////////
@@ -483,14 +483,20 @@ const render = (
     deltaSec,
   )
 
-  // SWAP: MODIFIED DENSITIES
-  // SWAP: MODIFIED VELOCITIES
+  swap(verticalVelocities)
+  swap(horizontalVelocities)
 
-  // TODO 2nd project here
+  projectRenderer.render(
+    horizontalVelocities[IN],
+    verticalVelocities[IN],
+    textureTemp,
+    textureTemp2,
+    textureTemp3,
+    horizontalVelocities[OUT],
+    verticalVelocities[OUT],
+  )
 
   // Rendering to canvas.
-  // By convention where the output density is in density2
-
   // Prepare for the next rendering cycle. Make sure that texture "1" is in and "2" is out.
   // Since after all the swaps we don't know which is which, just copy it.
   copyRenderer.render(densities[OUT], densities[IN]);
