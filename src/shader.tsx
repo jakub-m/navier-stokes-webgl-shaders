@@ -1,6 +1,6 @@
 import React, { useMemo, useEffect, useState, useRef, useCallback } from "react";
 
-import {GL, initializeGl, Texture, CanvasRenderer} from './webGlUtil'
+import {GL, initializeGl, Texture, CanvasRenderer, swap} from './webGlUtil'
 
 import { CopyRenderer } from "./textureRenderers/copyRenderer";
 import { DiffuseRenderer } from "./textureRenderers/diffuseRenderer";
@@ -21,6 +21,7 @@ const TEXTURE_TEMP = 7;
 const TEXTURE_V_HOR_S = 8;
 const TEXTURE_V_VER_S = 9;
 const TEXTURE_TEMP_2 = 10;
+const TEXTURE_TEMP_3 = 11;
 
 const IN = 0
 const OUT = 1
@@ -201,6 +202,7 @@ interface RenderingContext  {
 
   textureTemp: Texture
   textureTemp2: Texture
+  textureTemp3: Texture
 
   copyRenderer: CopyRenderer
   diffuseRenderer: DiffuseRenderer
@@ -256,6 +258,7 @@ const initializeRenderingContext = (): RenderingContext => {
   const density2 = newTexture(TEXTURE_DENSITY_2).fill(0);
   const textureTemp = newTexture(TEXTURE_TEMP).fill(0);
   const textureTemp2 = newTexture(TEXTURE_TEMP_2).fill(0);
+  const textureTemp3 = newTexture(TEXTURE_TEMP_3).fill(0);
 
   const copyRenderer = new CopyRenderer(gl);
   const diffuseRenderer = new DiffuseRenderer(gl);
@@ -285,6 +288,7 @@ const initializeRenderingContext = (): RenderingContext => {
     density2,
     textureTemp,
     textureTemp2,
+    textureTemp3,
     projectRenderer,
   }
 }
@@ -322,6 +326,7 @@ const render = (
     addRenderer,
     textureTemp,
     textureTemp2,
+    textureTemp3,
   } = rc
 
   if (sync === null) {
@@ -334,7 +339,7 @@ const render = (
     } else {
       // TODO do not reset interval (ms) to zero when the frame is not finished, rather accumulate
       // the interval.
-      console.log("Frame not finished yet")
+      // console.log("Frame not finished yet")
       return rc;
    }
   }
@@ -443,7 +448,7 @@ const render = (
   swap(verticalVelocities)
 
   // SWAP: MODIFIED DENSITIES
-  projectRenderer.render(horizontalVelocities[IN], verticalVelocities[IN], textureTemp, textureTemp2)
+  projectRenderer.render(horizontalVelocities[IN], verticalVelocities[IN], textureTemp, textureTemp2, textureTemp3)
 
   //swap(horizontalVelocities)
   //swap(verticalVelocities)
@@ -533,8 +538,3 @@ const getRelativePosFromEvent = (e: React.MouseEvent<HTMLCanvasElement>): XY => 
     return {x, y}
 }
 
-const swap = <T,>(arr: T[]): void => {
-  const [a, b] = [arr[0], arr[1]]
-  arr[0] = b
-  arr[1] = a
-}

@@ -577,3 +577,12 @@ const annotateLineNumbers = (s: string): string => {
     .map((s, i) => `${i + 1}\t${s}`)
     .join("\n");
 };
+
+export const swap = <T>(arr: T[]): void => {
+  if (arr.length !== 2) {
+    throw Error(`Swaps works on arrays of length 2, got ${arr.length}`);
+  }
+  const [a, b] = [arr[0], arr[1]];
+  arr[0] = b;
+  arr[1] = a;
+};

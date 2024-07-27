@@ -1,7 +1,7 @@
 import genericVertexShader from "./generic.vertexShader.glsl";
 import project_1_calc_div_fragmentShader from "./project_1_calc_div.fragmentShader.glsl";
 import project_2_empty_p_fragmentShader from "./project_2_empty_p.fragmentShader.glsl";
-//import project_3_calc_p_from_div_p_fragmentShader from "./project_3_calc_p_from_div_p.fragmentShader.glsl"
+import project_3_calc_p_from_div_p_fragmentShader from "./project_3_calc_p_from_div_p.fragmentShader.glsl";
 //import project_4_calc_v_hor_from_p_fragmentShader from "./project_4_calc_v_hor_from_p.fragmentShader.glsl"
 //import project_5_calc_v_ver_from_p_fragmentShader from "./project_5_calc_v_ver_from_p.fragmentShader.glsl"
 
@@ -13,21 +13,26 @@ import {
   prepareProgramToRenderOutput,
   validateDefined,
   appendCommonGlsl,
+  swap,
 } from "../webGlUtil";
+import { CopyRenderer } from "./copyRenderer";
 
-//import { CopyRenderer } from "./copyRenderer";
+const IN = 0;
+const OUT = 1;
 
 /**
  * A renderer that implements "project" function from p. 10 of the Paper.
  */
-
 export class ProjectRenderer {
   private gl: GL;
   private program1_calcDiv: WebGLProgram;
   private program2_emptyP: WebGLProgram;
+  private program3_calcPFromDiv: WebGLProgram;
+  private copyRenderer: CopyRenderer;
 
   constructor(gl: GL) {
     this.gl = gl;
+    this.copyRenderer = new CopyRenderer(gl);
     this.program1_calcDiv = createProgramFromSources(
       gl,
       genericVertexShader,
@@ -39,13 +44,24 @@ export class ProjectRenderer {
       genericVertexShader,
       project_2_empty_p_fragmentShader
     );
+
+    this.program3_calcPFromDiv = createProgramFromSources(
+      gl,
+      genericVertexShader,
+      appendCommonGlsl(project_3_calc_p_from_div_p_fragmentShader)
+    );
   }
 
+  /**
+   * The "temp" textures are used internally for intermediate calculations,
+   * the resulting value can be discarded by the caller.
+   */
   render(
     inputHorizontalVelocity: Texture, // u
     inputVerticalVelocity: Texture, // v
     tempDiv: Texture,
-    tempP: Texture
+    tempPIn: Texture,
+    tempPOut: Texture
     // outputHorizontalVelocity: Texture,
     // outputVerticalVelocity: Texture,
   ) {
@@ -53,10 +69,12 @@ export class ProjectRenderer {
       inputHorizontalVelocity,
       inputVerticalVelocity,
       tempDiv,
-      tempP,
+      tempPIn,
+      tempPOut,
     ]);
     this.renderCalcDiv(inputHorizontalVelocity, inputVerticalVelocity, tempDiv);
-    this.renderEmptyP(tempP);
+    this.renderEmptyP(tempPIn);
+    const tempP = this.renderCalcPFromDiv(tempDiv, tempPIn, tempPOut);
   }
 
   private renderCalcDiv(
@@ -100,5 +118,47 @@ export class ProjectRenderer {
     gl.useProgram(program);
     const vertexCount = prepareProgramToRenderOutput(gl, program, tempP);
     gl.drawArrays(gl.TRIANGLES, 0, vertexCount);
+  }
+
+  /**
+   * tempPIn and Out hold the "in" and "out" direction only for the first iteration. After that
+   * they are swapped. The final P output is returned by the method.
+   */
+  private renderCalcPFromDiv(
+    tempDiv: Texture,
+    tempPIn: Texture,
+    tempPOut: Texture
+  ): Texture {
+    const temps = [tempPIn, tempPOut];
+
+    const renderPFromDivOnce = (temps: Texture[]) => {
+      const gl = this.gl;
+      const program = this.program3_calcPFromDiv;
+      gl.useProgram(program);
+
+      const vertexCount = prepareProgramToRenderOutput(gl, program, temps[OUT]);
+
+      const u_p = gl.getUniformLocation(program, "u_p");
+      validateDefined({ u_p });
+      gl.uniform1i(u_p, temps[IN].texture_id);
+
+      const u_div = gl.getUniformLocation(program, "u_div");
+      validateDefined({ u_div });
+      gl.uniform1i(u_div, tempDiv.texture_id);
+
+      const u_texture_size = gl.getUniformLocation(program, "u_texture_size");
+      validateDefined({ u_texture_size });
+      gl.uniform2f(u_texture_size, tempDiv.width, tempDiv.height);
+
+      gl.drawArrays(gl.TRIANGLES, 0, vertexCount);
+    };
+
+    renderPFromDivOnce(temps);
+    for (var i = 0; i < 20; i++) {
+      swap(temps);
+      renderPFromDivOnce(temps);
+    }
+
+    return temps[OUT];
   }
 }
