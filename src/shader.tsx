@@ -447,11 +447,18 @@ const render = (
   swap(horizontalVelocities)
   swap(verticalVelocities)
 
-  // SWAP: MODIFIED DENSITIES
-  projectRenderer.render(horizontalVelocities[IN], verticalVelocities[IN], textureTemp, textureTemp2, textureTemp3)
+  projectRenderer.render(
+    horizontalVelocities[IN],
+    verticalVelocities[IN],
+    textureTemp,
+    textureTemp2,
+    textureTemp3,
+    horizontalVelocities[OUT],
+    verticalVelocities[OUT],
+  )
 
-  //swap(horizontalVelocities)
-  //swap(verticalVelocities)
+  swap(horizontalVelocities)
+  swap(verticalVelocities)
 
   // TODO 1st project here
 
@@ -470,6 +477,7 @@ const render = (
     deltaSec,
   )
 
+  // SWAP: MODIFIED DENSITIES
   // SWAP: MODIFIED VELOCITIES
 
   // TODO 2nd project here

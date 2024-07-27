@@ -2,7 +2,7 @@ import genericVertexShader from "./generic.vertexShader.glsl";
 import project_1_calc_div_fragmentShader from "./project_1_calc_div.fragmentShader.glsl";
 import project_2_empty_p_fragmentShader from "./project_2_empty_p.fragmentShader.glsl";
 import project_3_calc_p_from_div_p_fragmentShader from "./project_3_calc_p_from_div_p.fragmentShader.glsl";
-//import project_4_calc_v_hor_from_p_fragmentShader from "./project_4_calc_v_hor_from_p.fragmentShader.glsl"
+import project_4_calc_v_hor_from_p_fragmentShader from "./project_4_calc_v_hor_from_p.fragmentShader.glsl";
 //import project_5_calc_v_ver_from_p_fragmentShader from "./project_5_calc_v_ver_from_p.fragmentShader.glsl"
 
 import {
@@ -16,6 +16,7 @@ import {
   swap,
 } from "../webGlUtil";
 import { CopyRenderer } from "./copyRenderer";
+import { validate } from "webpack";
 
 const IN = 0;
 const OUT = 1;
@@ -28,6 +29,7 @@ export class ProjectRenderer {
   private program1_calcDiv: WebGLProgram;
   private program2_emptyP: WebGLProgram;
   private program3_calcPFromDiv: WebGLProgram;
+  private program4_calcHorVel: WebGLProgram;
   private copyRenderer: CopyRenderer;
 
   constructor(gl: GL) {
@@ -50,6 +52,12 @@ export class ProjectRenderer {
       genericVertexShader,
       appendCommonGlsl(project_3_calc_p_from_div_p_fragmentShader)
     );
+
+    this.program4_calcHorVel = createProgramFromSources(
+      gl,
+      genericVertexShader,
+      appendCommonGlsl(project_4_calc_v_hor_from_p_fragmentShader)
+    );
   }
 
   /**
@@ -61,9 +69,9 @@ export class ProjectRenderer {
     inputVerticalVelocity: Texture, // v
     tempDiv: Texture,
     tempPIn: Texture,
-    tempPOut: Texture
-    // outputHorizontalVelocity: Texture,
-    // outputVerticalVelocity: Texture,
+    tempPOut: Texture,
+    outputHorizontalVelocity: Texture,
+    outputVerticalVelocity: Texture
   ) {
     validateTexturesHaveSameSize([
       inputHorizontalVelocity,
@@ -75,6 +83,11 @@ export class ProjectRenderer {
     this.renderCalcDiv(inputHorizontalVelocity, inputVerticalVelocity, tempDiv);
     this.renderEmptyP(tempPIn);
     const tempP = this.renderCalcPFromDiv(tempDiv, tempPIn, tempPOut);
+    this.renderCalcHorizontalVelocity(
+      inputHorizontalVelocity,
+      tempP,
+      outputHorizontalVelocity
+    );
   }
 
   private renderCalcDiv(
@@ -160,5 +173,41 @@ export class ProjectRenderer {
     }
 
     return temps[OUT];
+  }
+
+  private renderCalcHorizontalVelocity(
+    horizontalVelocityIn: Texture,
+    tempP: Texture,
+    horizontalVelocityOut: Texture
+  ) {
+    const gl = this.gl;
+    const program = this.program4_calcHorVel;
+    gl.useProgram(program);
+    const vertexCount = prepareProgramToRenderOutput(
+      gl,
+      program,
+      horizontalVelocityOut
+    );
+
+    const u_horizontal_velocity = gl.getUniformLocation(
+      program,
+      "u_horizontal_velocity"
+    );
+    validateDefined({ u_horizontal_velocity });
+
+    const u_p = gl.getUniformLocation(program, "u_p");
+    gl.uniform1i(u_horizontal_velocity, horizontalVelocityIn.texture_id);
+    validateDefined({ u_p });
+    gl.uniform1i(u_p, tempP.texture_id);
+
+    const u_texture_size = gl.getUniformLocation(program, "u_texture_size");
+    validateDefined({ u_texture_size });
+    gl.uniform2f(
+      u_texture_size,
+      horizontalVelocityIn.width,
+      horizontalVelocityIn.height
+    );
+
+    gl.drawArrays(gl.TRIANGLES, 0, vertexCount);
   }
 }
