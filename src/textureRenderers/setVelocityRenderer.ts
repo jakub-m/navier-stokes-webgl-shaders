@@ -39,6 +39,7 @@ export class SetVelocityRenderer {
     tSec0: number,
     p1: XY,
     tSec1: number,
+    mode: "horizontal" | "vertical",
     relativeRadius?: number
   ) {
     const gl = this.gl;
@@ -49,11 +50,41 @@ export class SetVelocityRenderer {
       relativeRadius = defaultRelativeRadius;
     }
     const vertexCount = prepareProgramToRenderOutput(gl, program, output);
-    //"u_relative_radius";
-    //"u_relative_pos_0";
-    //"u_time_sec_0";
-    //"u_relative_pos_1";
-    //"u_time_sec_1";
+    const u_relative_radius = gl.getUniformLocation(
+      program,
+      "u_relative_radius"
+    );
+    validateDefined({ u_relative_radius });
+    gl.uniform1f(u_relative_radius, relativeRadius);
+
+    const u_relative_pos_0 = gl.getUniformLocation(program, "u_relative_pos_0");
+    validateDefined({ u_relative_pos_0 });
+    gl.uniform2f(u_relative_pos_0, p0.x, p0.y);
+
+    const u_time_sec_0 = gl.getUniformLocation(program, "u_time_sec_0");
+    validateDefined({ u_time_sec_0 });
+    gl.uniform1f(u_time_sec_0, tSec0); // tSec0);
+    console.log("tSec0", tSec0);
+
+    const u_relative_pos_1 = gl.getUniformLocation(program, "u_relative_pos_1");
+    validateDefined({ u_relative_pos_1 });
+    gl.uniform2f(u_relative_pos_1, p1.x, p1.y);
+
+    const u_time_sec_1 = gl.getUniformLocation(program, "u_time_sec_1");
+    validateDefined({ u_time_sec_1 });
+    gl.uniform1f(u_time_sec_1, tSec1); // tSec1);
+    console.log("tSec1", tSec1);
+
+    const u_mode = gl.getUniformLocation(program, "u_mode");
+    validateDefined({ u_mode });
+    if (mode === "horizontal") {
+      gl.uniform1i(u_mode, 0);
+    } else if (mode === "vertical") {
+      gl.uniform1i(u_mode, 1);
+    } else {
+      throw Error(`Bad mode ${mode}`);
+    }
+
     gl.drawArrays(gl.TRIANGLES, 0, vertexCount);
   }
 }

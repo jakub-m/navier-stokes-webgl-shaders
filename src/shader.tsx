@@ -177,12 +177,17 @@ export const Shader = ({setFps, diffusionRateRef, viscosityRef, outputSelectorRe
     }
   }
 
+  const handleMouseUp = () => {
+      mouseMovementRef.current = undefined
+  }
+
   const canvas = useMemo(
     () => <
       canvas
       id="c"
       style={{width: "100%", height: "100%"}}
       onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
       />,
     [])
   return (
@@ -396,9 +401,11 @@ const render = (
     if (prevPos !== undefined) {
       const prevXY = {x: prevPos.x, y: prevPos.y}
       const currXY = {x: currPos.x, y: currPos.y}
-      setVelocityRenderer.render(horizontalVelocitySource, prevXY, prevPos.tSec, currXY, currPos.tSec)
-      setVelocityRenderer.render(verticalVelocitySource, prevXY, prevPos.tSec, currXY, currPos.tSec)
-      console.log("x", currPos.x - prevPos.x, "y", currPos.y - prevPos.y, "t", currPos.tSec - prevPos.tSec)
+      // setVelocityRenderer.render(horizontalVelocitySource, prevXY, prevPos.tSec, currXY, currPos.tSec, "horizontal")
+      // setVelocityRenderer.render(verticalVelocitySource, prevXY, prevPos.tSec, currXY, currPos.tSec, "vertical")
+      //const dt = currPos.tSec - prevPos.tSec
+      //console.log("x", (currPos.x - prevPos.x)/ dt, "y", (currPos.y - prevPos.y) / dt)
+      console.log(new Date())
     }
   }
 
