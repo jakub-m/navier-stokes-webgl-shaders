@@ -2,6 +2,10 @@
 
 Draw only speed without density.
 
+Start and stop without restart
+
+Separate restart btn
+
 Change view and tooling with keys
 
 Implement set_bnd

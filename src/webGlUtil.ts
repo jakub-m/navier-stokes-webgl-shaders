@@ -1,5 +1,3 @@
-import drawTextureToScreenVS from "./shaders/drawTextureToScreen.vertexShader.glsl";
-import drawTextureToScreenFS from "./shaders/drawTextureToScreen.fragmentShader.glsl";
 import commonFS from "./textureRenderers/common.fragmentShader.glsl";
 
 export type GL = WebGL2RenderingContext;
@@ -22,64 +20,6 @@ const enableExtension = (gl: GL, name: string) => {
     );
   }
 };
-
-export class CanvasRenderer {
-  gl: GL;
-  program: WebGLProgram;
-  constructor(gl: GL) {
-    resizeCanvasToDisplaySize(gl.canvas);
-    this.gl = gl;
-    this.program = createProgramFromSources(
-      gl,
-      drawTextureToScreenVS,
-      drawTextureToScreenFS
-    );
-  }
-
-  render(textureA?: Texture, textureB?: Texture) {
-    var gl = this.gl;
-    var program = this.program;
-    gl.useProgram(program);
-
-    var a_position_loc = gl.getAttribLocation(program, "a_position");
-    var a_texcoord_loc = gl.getAttribLocation(program, "a_texcoord");
-    var u_texture_a_loc = gl.getUniformLocation(program, "u_texture_a");
-    var u_texture_b_loc = gl.getUniformLocation(program, "u_texture_b");
-    validateLocation({ a_position_loc, a_texcoord_loc });
-
-    var vao = gl.createVertexArray();
-    gl.bindVertexArray(vao);
-
-    // TODO Is this initialization needed each time or once?
-    const vertexCount = initFullSquareVertexPos(gl, a_position_loc);
-    initFullSquareTexturePos(gl, a_texcoord_loc);
-
-    var hasTexture = false;
-    if (textureA !== undefined) {
-      gl.uniform1i(u_texture_a_loc, textureA.texture_id);
-      hasTexture = true;
-    }
-    if (textureB !== undefined) {
-      gl.uniform1i(u_texture_b_loc, textureB.texture_id);
-      hasTexture = true;
-    }
-
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null); // Render to the canvas.
-
-    if (hasTexture) {
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST); // gl.NEAREST_MIPMAP_LINEAR is default
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    }
-
-    // Tell WebGL how to convert from clip space to pixels
-    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-    // Clear the canvas
-    gl.clearColor(0, 0, 0, 0);
-    gl.clear(gl.COLOR_BUFFER_BIT);
-    gl.drawArrays(gl.TRIANGLES, 0, vertexCount);
-  }
-}
 
 /** Get WebGL context */
 export const getGlContext = (selector: string): GL => {
@@ -133,111 +73,6 @@ export class Texture {
     return this;
   }
 }
-
-///**
-// * DEPRECATE
-// * Render program to texture.
-// */
-//export class TextureRenderer {
-//  gl: GL;
-//  program: WebGLProgram;
-//
-//  constructor(gl: GL, vertexShader: string, fragmentShader: string) {
-//    validateDefined({ gl });
-//    this.gl = gl;
-//    this.program = createProgramFromSources(gl, vertexShader, fragmentShader);
-//  }
-//
-//  /**
-//   * @param inputTextures is a mapping of variable name ("uniform location") to Texture.
-//   */
-//  renderToTexture({
-//    inputs,
-//    intervalMs,
-//    output,
-//  }: {
-//    inputs?: { [loc: string]: Texture };
-//    intervalMs?: number;
-//    output: Texture;
-//  }) {
-//    var gl = this.gl;
-//    var program = this.program;
-//    gl.useProgram(program);
-//
-//    var a_position_loc = gl.getAttribLocation(program, "a_position");
-//    var a_texcoord_loc = gl.getAttribLocation(program, "a_texcoord");
-//    var u_texture_size = gl.getUniformLocation(program, "u_texture_size");
-//    var u_dt = gl.getUniformLocation(program, "u_dt");
-//
-//    validateLocation({
-//      a_position_loc,
-//      a_texcoord_loc,
-//      u_dt,
-//      // u_texture_size,
-//    });
-//
-//    var vao = gl.createVertexArray();
-//    gl.bindVertexArray(vao);
-//
-//    // TODO do it only once, if at all.
-//    initFullSquareTexturePos(gl, a_texcoord_loc);
-//    const vertexCount = initFullSquareVertexPos(gl, a_position_loc);
-//    // TODO do I need to create frame buffer each time, or only once?
-//    this._attachFramebuffer(gl, output.texture, output.width, output.height);
-//
-//    gl.clearColor(0, 0, 0, 0);
-//    gl.clear(gl.COLOR_BUFFER_BIT);
-//    const [width, height] = [output.width, output.height];
-//    gl.uniform2f(u_texture_size, width, height);
-//
-//    const setUniform1iLoc = (
-//      tex: Texture | undefined,
-//      loc: WebGLUniformLocation | null,
-//      message: string
-//    ) => {
-//      if (tex === undefined) {
-//        console.log(`Skip setting ${message}`);
-//        return;
-//      }
-//      validateTexturesHaveSameSize([output, tex]);
-//      gl.uniform1i(loc, tex.texture_id);
-//    };
-//
-//    if (inputs !== undefined) {
-//      Object.keys(inputs).forEach((u_variable_name) => {
-//        var u_loc = gl.getUniformLocation(program, u_variable_name);
-//        const texture = inputs[u_variable_name];
-//        setUniform1iLoc(texture, u_loc, u_variable_name);
-//      });
-//    }
-//
-//    if (intervalMs !== undefined) {
-//      gl.uniform1f(u_dt, intervalMs / 1000);
-//    }
-//
-//    gl.drawArrays(gl.TRIANGLES, 0, vertexCount);
-//  }
-//
-//  _attachFramebuffer(
-//    gl: GL,
-//    texture: WebGLTexture,
-//    width: number,
-//    height: number
-//  ) {
-//    const fb = gl.createFramebuffer();
-//    gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
-//    gl.viewport(0, 0, width, height);
-//    const attachmentPoint = gl.COLOR_ATTACHMENT0;
-//    const level = 0;
-//    gl.framebufferTexture2D(
-//      gl.FRAMEBUFFER,
-//      attachmentPoint,
-//      gl.TEXTURE_2D,
-//      texture,
-//      level
-//    );
-//  }
-//}
 
 /**
  * data parameter is optional, if null then the data in the texture is undefined.
@@ -327,7 +162,7 @@ export const validateDefined = (args: { [key: string]: any }) => {
   }
 };
 
-const validateLocation = (args: { [key: string]: any }) => {
+export const validateLocation = (args: { [key: string]: any }) => {
   for (const key of Object.keys(args)) {
     const v = args[key];
     if (v === null || v < 0) {
@@ -335,32 +170,6 @@ const validateLocation = (args: { [key: string]: any }) => {
     }
   }
 };
-
-/**
- * Ensure that the canvas has the same number of pixels as displayed on the screen. This is no obvious
- * because you could have canvas that has logically 10x10 pixels displayed as 40x40 picture on screen.
- */
-function resizeCanvasToDisplaySize(
-  canvas: HTMLCanvasElement | OffscreenCanvas
-) {
-  if (canvas instanceof OffscreenCanvas) {
-    return;
-  }
-  const displayWidth = canvas.clientWidth;
-  const displayHeight = canvas.clientHeight;
-  // width - number of logical pixels
-  // clientWidth - number of pixels occupied on the screen
-
-  const needResize =
-    canvas.width !== displayWidth || canvas.height !== displayHeight;
-
-  if (needResize) {
-    // Make the canvas the same size
-    canvas.width = displayWidth;
-    canvas.height = displayHeight;
-  }
-  return needResize;
-}
 
 export const createProgramFromSources = (
   gl: GL,
@@ -458,7 +267,7 @@ export const prepareProgramToRenderOutput = (
 /**
  * Set 6 vertices so they form a rectangle covering whole viewport.
  */
-const initFullSquareVertexPos = (gl: GL, a_position_loc: GLint) => {
+export const initFullSquareVertexPos = (gl: GL, a_position_loc: GLint) => {
   validateDefined({ gl, a_position_loc });
   var positionBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
@@ -484,7 +293,7 @@ const initFullSquareVertexPos = (gl: GL, a_position_loc: GLint) => {
   return vertices.length / 2;
 };
 
-const initFullSquareTexturePos = (gl: GL, a_texcoord_loc: GLint) => {
+export const initFullSquareTexturePos = (gl: GL, a_texcoord_loc: GLint) => {
   validateDefined({ gl, a_texcoord_loc });
   var texBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, texBuffer);

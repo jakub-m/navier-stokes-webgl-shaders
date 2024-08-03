@@ -1,7 +1,8 @@
 import React, { useMemo, useEffect, useState, useRef, useCallback } from "react";
 
-import {GL, initializeGl, Texture, CanvasRenderer, swap} from './webGlUtil'
+import {GL, initializeGl, Texture, swap} from './webGlUtil'
 
+import { CanvasRenderer } from "./CanvasRenderer";
 import { CopyRenderer } from "./textureRenderers/copyRenderer";
 import { DiffuseRenderer } from "./textureRenderers/diffuseRenderer";
 import { AddRenderer } from "./textureRenderers/addRenderer";
