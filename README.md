@@ -1,5 +1,7 @@
 ## shader-fluid
 
+An implementation of ["Real-Time Fluid Dynamics for Games"][ref_paper] (Jos Stam) using WebGL.
+
 # Naive understanding of GPGPU
 
 1. There are two shaders: Vertex Shader and Fragment Shader. Vertex and Fragment shader compose a Program.
@@ -51,4 +53,6 @@
 
 ## Navier-Stokes Equations
 
-- [Real-Time Fluid Dynamics for Games](https://web.archive.org/web/20200805215025/https://pdfs.semanticscholar.org/847f/819a4ea14bd789aca8bc88e85e906cfc657c.pdf). This article is referred to in this readme and in the code as **the Paper**.
+- [Real-Time Fluid Dynamics for Games][ref_paper]. This article is referred to in this readme and in the code as **the Paper**.
+
+[ref_paper]:https://web.archive.org/web/20200805215025/https://pdfs.semanticscholar.org/847f/819a4ea14bd789aca8bc88e85e906cfc657c.pdf
