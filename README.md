@@ -1,8 +1,9 @@
-## shader-fluid
+navier-stokes-webgl-shaders
+---------------------------
 
 An implementation of ["Real-Time Fluid Dynamics for Games"][ref_paper] (Jos Stam) using WebGL.
 
-# Naive understanding of GPGPU
+# My naive understanding of GPGPU
 
 1. There are two shaders: Vertex Shader and Fragment Shader. Vertex and Fragment shader compose a Program.
 1. Vertex shader is a tiny program run on a tiny simple GPU machine that takes vertices (e.g. a two points of a line or three edges of a triangle) and does something with that (e.g. rotates or applies perspective).

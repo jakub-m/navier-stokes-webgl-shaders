@@ -15,6 +15,9 @@ function App() {
       diffusionRateRef={diffusionRateRef} 
       viscosityRef={viscosityRef}
       outputSelectorRef={outputSelectorRef}
+      canvasStyle={{width:"512px", height:"512px", border: "1px solid black"}}
+      height={512}
+      width={512}
     />
   ), [setFps, diffusionRateRef, viscosityRef, outputSelectorRef])
 

@@ -29,6 +29,7 @@ const OUT = 1
 
 const defaultWidth = 128
 const defaultHeight = 128
+const defaultCanvasStyle = {width: "256px", height: "256px"}
 
 
 export interface XY {x: number, y: number}
@@ -50,6 +51,10 @@ export enum OutputSelector {
   DENSITY_SOURCE = "DENSITY_SOURCE",
 }
 
+/**
+ * @param width width of the internal representation of the state.
+ * @param height height of the internal representation of the state.
+ */
 export interface ShaderProps {
   setFps?: (fps: number) => void
   viscosity?: number
@@ -58,9 +63,18 @@ export interface ShaderProps {
   viscosityRef?: React.MutableRefObject<number>
   width?: number
   height?: number
+  canvasStyle?: React.CSSProperties
 }
 
-export const Shader = ({setFps, diffusionRateRef, viscosityRef, outputSelectorRef, width=defaultWidth, height=defaultHeight}: ShaderProps) => {
+export const Shader = ({
+  setFps,
+  diffusionRateRef,
+  viscosityRef,
+  outputSelectorRef,
+  width=defaultWidth,
+  height=defaultHeight,
+  canvasStyle=defaultCanvasStyle,
+}: ShaderProps) => {
   const [run, setRun] = useState(false); // default run
   const requestAnimationFrameRef = useRef<number>()
   const renderingContextRef = useRef<RenderingContext>()
@@ -148,19 +162,6 @@ export const Shader = ({setFps, diffusionRateRef, viscosityRef, outputSelectorRe
     }
   }
 
-  const handleClickStep = () => {
-    const rc = renderingContextRef.current
-    if (rc !== undefined) {
-      renderingContextRef.current = render({
-        rc,
-        outputSelector: getOutputSelector(),
-        diffusionRate: getDiffusionRate(),
-        viscosity: getViscosity(),
-        frameTimeMs: (rc.prevFrameTime || 0) + 100,
-      })
-    }
-  }
-
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const tSec = (new Date()).getTime() / 1000
     const {x, y} = getRelativePosFromEvent(e)
@@ -193,11 +194,10 @@ export const Shader = ({setFps, diffusionRateRef, viscosityRef, outputSelectorRe
     [])
   return (
     <>
-      <div style={{width: "256px", height: "256px"}}>
+      <div style={canvasStyle}>
         {canvas}
       </div>
       <div onClick={handleClickPlay}>{pausePlayButton}</div>
-      <div onClick={handleClickStep}>step</div>
     </>)
 };
 
