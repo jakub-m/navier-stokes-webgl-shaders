@@ -5,7 +5,6 @@ import {
   GL,
   Texture,
   createProgramFromSources,
-  validateTexturesHaveSameSize,
   prepareProgramToRenderOutput,
   validateDefined,
   appendCommonGlsl,
@@ -61,19 +60,22 @@ export class SetVelocityRenderer {
     validateDefined({ u_relative_pos_0 });
     gl.uniform2f(u_relative_pos_0, p0.x, p0.y);
 
-    const u_time_sec_0 = gl.getUniformLocation(program, "u_time_sec_0");
-    validateDefined({ u_time_sec_0 });
-    gl.uniform1f(u_time_sec_0, tSec0); // tSec0);
-    console.log("tSec0", tSec0);
+    //const u_time_sec_0 = gl.getUniformLocation(program, "u_time_sec_0");
+    //validateDefined({ u_time_sec_0 });
+    //gl.uniform1f(u_time_sec_0, tSec0);
 
     const u_relative_pos_1 = gl.getUniformLocation(program, "u_relative_pos_1");
     validateDefined({ u_relative_pos_1 });
     gl.uniform2f(u_relative_pos_1, p1.x, p1.y);
 
-    const u_time_sec_1 = gl.getUniformLocation(program, "u_time_sec_1");
-    validateDefined({ u_time_sec_1 });
-    gl.uniform1f(u_time_sec_1, tSec1); // tSec1);
-    console.log("tSec1", tSec1);
+    //const u_time_sec_1 = gl.getUniformLocation(program, "u_time_sec_1");
+    //validateDefined({ u_time_sec_1 });
+    //gl.uniform1f(u_time_sec_1, tSec1);
+    // console.log({ u_time_sec_0, u_time_sec_1 });
+
+    // console.log("tSec1 - tSec0", tSec1 - tSec0, tSec0);
+    // console.log("vel dx/dt:", (p1.x - p0.x) / (tSec1 - tSec0));
+    // console.log("vel dx * 100", (p1.x - p0.x) * 100);
 
     const u_mode = gl.getUniformLocation(program, "u_mode");
     validateDefined({ u_mode });
@@ -88,11 +90,3 @@ export class SetVelocityRenderer {
     gl.drawArrays(gl.TRIANGLES, 0, vertexCount);
   }
 }
-
-//    var u_relative_radius = gl.getUniformLocation(program, "u_relative_radius");
-//    validateDefined({ u_relative_radius });
-//    gl.uniform1f(u_relative_radius, relativeRadius);
-//
-//    var u_relative_pos = gl.getUniformLocation(program, "u_relative_pos");
-//    validateDefined({ u_relative_pos });
-//    gl.uniform2f(u_relative_pos, relativePos.x, relativePos.y);

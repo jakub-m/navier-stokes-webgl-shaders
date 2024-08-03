@@ -177,7 +177,7 @@ export const Shader = ({setFps, diffusionRateRef, viscosityRef, outputSelectorRe
     }
   }
 
-  const handleMouseUp = () => {
+  const handleMouseUpOrLeave = () => {
       mouseMovementRef.current = undefined
   }
 
@@ -187,7 +187,8 @@ export const Shader = ({setFps, diffusionRateRef, viscosityRef, outputSelectorRe
       id="c"
       style={{width: "100%", height: "100%"}}
       onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
+      onMouseUp={handleMouseUpOrLeave}
+      onMouseLeave={handleMouseUpOrLeave}
       />,
     [])
   return (
@@ -401,11 +402,11 @@ const render = (
     if (prevPos !== undefined) {
       const prevXY = {x: prevPos.x, y: prevPos.y}
       const currXY = {x: currPos.x, y: currPos.y}
-      // setVelocityRenderer.render(horizontalVelocitySource, prevXY, prevPos.tSec, currXY, currPos.tSec, "horizontal")
-      // setVelocityRenderer.render(verticalVelocitySource, prevXY, prevPos.tSec, currXY, currPos.tSec, "vertical")
+      setVelocityRenderer.render(horizontalVelocitySource, prevXY, prevPos.tSec, currXY, currPos.tSec, "horizontal")
+      setVelocityRenderer.render(verticalVelocitySource, prevXY, prevPos.tSec, currXY, currPos.tSec, "vertical")
       //const dt = currPos.tSec - prevPos.tSec
-      //console.log("x", (currPos.x - prevPos.x)/ dt, "y", (currPos.y - prevPos.y) / dt)
-      console.log(new Date())
+      //console.log("x", (currPos.x - prevPos.x), "y", (currPos.y - prevPos.y), dt)
+      ////console.log(new Date())
     }
   }
 

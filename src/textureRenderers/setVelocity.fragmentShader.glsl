@@ -15,40 +15,37 @@ uniform float u_time_sec_1;
 // mode 0 = horizontal, 1 = vertical
 uniform int u_mode;
 
-float getVelocity(float ds, float dt) {
-    float v = 2.0;
-    if (dt == 0.0) {
-        return 0.0;
+void main() {
+    float base_vel = 200.0;
+    vec2 delta_pos = u_relative_pos_1 - u_relative_pos_0;
+    //float v_tot = length(delta_pos) * v_multiplier;
+    //float dt = u_time_sec_1 - u_time_sec_0;
+    float dt = 1.0;
+    float v = 0.0;
+    //float v = v_tot;
+    if (u_mode == 0) {
+        // vertical
+        v = delta_pos.x / dt * base_vel;
+    } else if (u_mode == 1) {
+        // horizontal
+        v = delta_pos.y / dt * base_vel;
     }
-    //float v = ds / dt;
-    //if (v > 10.0) {
+
+    // BUG: No idea why both times are equal.
+    //if (u_time_sec_0 > 1722699570.0 + 240.0 ) {
     //    v = 10.0;
     //}
+    //if (u_time_sec_1 == u_time_sec_0) { // what???
+    //    v = 10.0;
+    //}
+
+    // Render circle with radius.
     float dx = u_relative_pos_1.x - v_input_texture_coord.x;
     float dy = u_relative_pos_1.y - v_input_texture_coord.y;
     if (dx * dx + dy * dy < u_relative_radius * u_relative_radius) {
-        return v;
+        output_color = vec4(v, 1.0, 1.0, 1.0);
     } else {
-        return 0.0;
+        output_color = vec4(0.0, 0.0, 0.0, 0.0);
     }
-}
-
-void main() {
-    float v = 0.0;
-    if (u_mode == 0) {
-        // horizontal
-        float ds = u_relative_pos_1.x - u_relative_pos_0.x;
-        float dt = u_time_sec_1 - u_time_sec_0;
-        //v = getVelocity(ds, dt);
-        if (dt == 0.0) {
-            v = 1.0;
-        }
-        // v = 0.0;
-    } else if (u_mode == 1) {
-        // vertical
-        // v = 1.0;
-        //v = getVelocity(u_relative_pos_1.y - u_relative_pos_0.y, u_time_sec_1 - u_time_sec_0);
-    }
-    output_color = vec4(v, 1, 1, 1);
 }
 
