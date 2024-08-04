@@ -101,16 +101,19 @@ function App() {
   useEffect(() => {playRef.current = play}, [play])
 
   return (
-    <div style={{marginLeft: "3em"}}>
-      <div style={{height: "3em"}}></div>
-      <div className="sliderContainer" hidden={false}>
-        <div>{inputSelectorButtons}</div>
-        <div>{outputSelectorButtons}</div>
-        {diffusionRateSlider}
-        {viscositySlider}
-        {playButton}
+    <div style={{marginLeft: "3em", marginTop: "3em"}}>
+      <div style={{display: "flex", flexDirection: "row"}}>
+        <div>
+          {shader}
+        </div>
+        <div style={{display: "flex", flexDirection: "column", marginLeft: "1em"}}>
+          <div>{inputSelectorButtons}</div>
+          <div>{outputSelectorButtons}</div>
+          <div>{diffusionRateSlider}</div>
+          <div>{viscositySlider}</div>
+          <div>{playButton}</div>
+        </div>
       </div>
-      {shader}
       <div>{Math.round(fps)} fps</div>
     </div>
   );
