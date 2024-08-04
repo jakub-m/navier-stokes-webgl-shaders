@@ -1,7 +1,5 @@
 # TODO
 
-Draw only speed without density.
-
 Start and stop without restart
 
 Separate restart btn
