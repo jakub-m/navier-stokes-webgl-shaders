@@ -1,16 +1,13 @@
-import React, {useMemo, useRef, useState} from 'react';
+import React, {useMemo, useState} from 'react';
 import './App.css';
 import { Shader, OutputSelector } from './shader';
 import { Slider, ToggleButtonGroup, ToggleButton } from '@mui/material';
-import { getParsedCommandLineOfConfigFile } from 'typescript';
+import { useStateRef } from './useStateRef';
 
 function App() {
-  const diffusionRateRef = useRef(0.002)
-  const [diffusionRate, setDiffusionRate] = useState(0.002)
-  const viscosityRef = useRef(0.01)
-  const [viscosity, setViscosity] = useState(0.01)
-  const outputSelectorRef = useRef(OutputSelector.DENSITY)
-  const [outputSelector, setOutputSelector] = useState(OutputSelector.DENSITY)
+  const [diffusionRate, setDiffusionRate, diffusionRateRef] = useStateRef(0.002)
+  const [viscosity, setViscosity, viscosityRef] = useStateRef(0.01)
+  const [outputSelector, setOutputSelector, outputSelectorRef] = useStateRef(OutputSelector.DENSITY)
   const [fps, setFps] = useState(0)
 
   const shader = useMemo(() => (
@@ -38,7 +35,6 @@ function App() {
         onChange={(e) => {
           const t = e.target as HTMLInputElement;
           const value = parseFloat(t.value)
-          diffusionRateRef.current  = value
           setDiffusionRate(value)
         }}
       />
@@ -57,19 +53,17 @@ function App() {
         onChange={(e) => {
           const t = e.target as HTMLInputElement;
           const value = parseFloat(t.value)
-          viscosityRef.current = parseFloat(t.value)
           setViscosity(value)
         }}
       />
     </>
   )
 
-  const outputSelect = (
+  const outputSelectorButtons = (
     <ToggleButtonGroup color="primary" value={outputSelector} exclusive onChange={
       (e) => {
         const value = e.target.value as OutputSelector
         setOutputSelector(value)
-        outputSelectorRef.current = value
       }
 }>
          <ToggleButton value={OutputSelector.DENSITY}>Density</ToggleButton>
@@ -83,7 +77,7 @@ function App() {
     <div style={{marginLeft: "3em"}}>
       <div style={{height: "3em"}}></div>
       <div className="sliderContainer" hidden={false}>
-        <div>{outputSelect}</div>
+        <div>{outputSelectorButtons}</div>
         {diffusionRateSlider}
         {viscositySlider}
       </div>
