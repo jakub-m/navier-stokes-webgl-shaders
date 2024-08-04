@@ -134,20 +134,25 @@ export const Shader = ({
 
   const animate = useCallback((frameTimeMs: number) => {
     var rc = renderingContextRef.current
-    if (rc !== undefined && getRunRef()) {
-      const t0 = rc.prevFrameTime
-      rc = render({
-        rc,
-        inputSelector: getInputSelector(),
-        outputSelector: getOutputSelector(), 
-        diffusionRate: getDiffusionRate(),
-        viscosity: getViscosity(),
-        movement: getMouseMovement(),
-        frameTimeMs,
-      })
-      renderingContextRef.current = rc
-      if (setFps !== undefined && rc?.frameInProgress === false && t0 !== undefined) {
-        setFps(1000/(frameTimeMs - t0))
+    if (rc !== undefined) {
+      if (getRunRef()) {
+        const t0 = rc.prevFrameTime
+        rc = render({
+          rc,
+          inputSelector: getInputSelector(),
+          outputSelector: getOutputSelector(), 
+          diffusionRate: getDiffusionRate(),
+          viscosity: getViscosity(),
+          movement: getMouseMovement(),
+          frameTimeMs,
+        })
+        renderingContextRef.current = rc
+        if (setFps !== undefined && rc?.frameInProgress === false && t0 !== undefined) {
+          setFps(1000/(frameTimeMs - t0))
+        }
+      } else {
+        // Don't animate, only advance the frame timer to avoid large jump in the animation when play clicked.
+        renderingContextRef.current = {...rc, prevFrameTime: frameTimeMs}
       }
     }
     requestAnimationFrameRef.current = requestAnimationFrame(animate);
