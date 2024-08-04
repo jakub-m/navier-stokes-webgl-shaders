@@ -16,12 +16,13 @@ function App() {
      setFps={setFps}
      diffusionRateRef={diffusionRateRef} 
      viscosityRef={viscosityRef}
+     inputSelectorRef={inputSelectorRef}
      outputSelectorRef={outputSelectorRef}
      canvasStyle={{width:"512px", height:"512px", border: "1px solid black"}}
      height={512}
      width={512}
    />
-  ), [setFps, diffusionRateRef, viscosityRef, outputSelectorRef])
+  ), [setFps, diffusionRateRef, viscosityRef, outputSelectorRef, inputSelectorRef])
 
   const diffusionRateSlider = (
     <>

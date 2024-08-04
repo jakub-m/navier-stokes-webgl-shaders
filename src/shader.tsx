@@ -88,6 +88,7 @@ export const Shader = ({
   setFps,
   diffusionRateRef,
   viscosityRef,
+  inputSelectorRef,
   outputSelectorRef,
   width=defaultWidth,
   height=defaultHeight,
@@ -105,6 +106,10 @@ export const Shader = ({
     const c = initializeRenderingContext({width, height});
     renderingContextRef.current = c
   });
+
+  const getInputSelector = useCallback(
+    () => getRefCurrentOrDefault(inputSelectorRef, InputSelector.DENSITY_AND_VELOCITY), [inputSelectorRef]
+  )
 
   const getOutputSelector = useCallback(
     () => getRefCurrentOrDefault(outputSelectorRef, OutputSelector.DENSITY),
@@ -130,7 +135,8 @@ export const Shader = ({
       const t0 = rc.prevFrameTime
       rc = render({
         rc,
-        outputSelector:getOutputSelector(), 
+        inputSelector: getInputSelector(),
+        outputSelector: getOutputSelector(), 
         diffusionRate: getDiffusionRate(),
         viscosity: getViscosity(),
         movement: getMouseMovement(),
@@ -334,8 +340,9 @@ const initializeRenderingContext = ({width, height}: {width: number, height: num
 }
 
 const render = (
-  {rc, outputSelector, diffusionRate, viscosity, movement, frameTimeMs} : {
+  {rc, inputSelector, outputSelector, diffusionRate, viscosity, movement, frameTimeMs} : {
     rc: RenderingContext,
+    inputSelector: InputSelector,
     outputSelector: OutputSelector,
     diffusionRate: number,
     viscosity: number,
@@ -401,13 +408,17 @@ const render = (
     cleanTexture(verticalVelocitySource)
   } else {
     const currPos = movement.pCurr
-    setCircleAtPosRenderer.render(densitySource, currPos)
+    if (inputSelector === InputSelector.DENSITY || inputSelector === InputSelector.DENSITY_AND_VELOCITY) {
+      setCircleAtPosRenderer.render(densitySource, currPos)
+    }
     const prevPos = movement.pPrev
     if (prevPos !== undefined) {
       const prevXY = {x: prevPos.x, y: prevPos.y}
       const currXY = {x: currPos.x, y: currPos.y}
-      setVelocityRenderer.render(horizontalVelocitySource, prevXY, prevPos.tSec, currXY, currPos.tSec, "horizontal")
-      setVelocityRenderer.render(verticalVelocitySource, prevXY, prevPos.tSec, currXY, currPos.tSec, "vertical")
+      if (inputSelector === InputSelector.VELOCITY || inputSelector === InputSelector.DENSITY_AND_VELOCITY) {
+        setVelocityRenderer.render(horizontalVelocitySource, prevXY, prevPos.tSec, currXY, currPos.tSec, "horizontal")
+        setVelocityRenderer.render(verticalVelocitySource, prevXY, prevPos.tSec, currXY, currPos.tSec, "vertical")
+      }
       //const dt = currPos.tSec - prevPos.tSec
       //console.log("x", (currPos.x - prevPos.x), "y", (currPos.y - prevPos.y), dt)
       ////console.log(new Date())
