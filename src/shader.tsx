@@ -259,12 +259,6 @@ interface RenderingContext  {
    * See https://computergraphics.stackexchange.com/questions/4964/how-to-know-when-rendering-is-complete-in-webgl
    */
   sync: WebGLSync | null
-  /**
-   * Tell if texture A and B should be swapped when generating textures. This value should be
-   * flipped every animation frame, so A is generated to B and then B is generated to A
-   * (so called ping-pong rendering).
-   */
-  // swapTextures: boolean
 }
 
 const initializeRenderingContext = ({width, height}: {width: number, height: number}): RenderingContext => {
@@ -313,28 +307,29 @@ const initializeRenderingContext = ({width, height}: {width: number, height: num
   const setVelocityRenderer = new SetVelocityRenderer(gl)
 
   return {
-    gl, copyRenderer, canvasRenderer,
-    // swapTextures: false,
-    sync: null, 
     addRenderer,
-    diffuseRenderer,
     advectRenderer,
-    setCircleAtPosRenderer,
-    densitySource,
-    horizontalVelocitySource,
-    verticalVelocitySource,
-    horizontalVelocity1,
-    horizontalVelocity2,
-    verticalVelocity1,
-    verticalVelocity2,
+    canvasRenderer,
+    copyRenderer,
     density1,
     density2,
+    densitySource,
+    diffuseRenderer,
+    frameInProgress: false,
+    gl,
+    horizontalVelocity1,
+    horizontalVelocity2,
+    horizontalVelocitySource,
+    projectRenderer,
+    setCircleAtPosRenderer,
+    setVelocityRenderer,
+    sync: null, 
     textureTemp,
     textureTemp2,
     textureTemp3,
-    projectRenderer,
-    setVelocityRenderer,
-    frameInProgress: false,
+    verticalVelocity1,
+    verticalVelocity2,
+    verticalVelocitySource,
   }
 }
 
@@ -349,29 +344,29 @@ const render = (
   }
 ): RenderingContext | undefined => {
   const {
-    gl,
-    prevFrameTime,
-    sync,
-    densitySource,
-    horizontalVelocitySource,
-    horizontalVelocity1,
-    horizontalVelocity2,
-    verticalVelocitySource,
-    verticalVelocity1,
-    verticalVelocity2,
+    addRenderer,
+    advectRenderer,
+    canvasRenderer,
+    copyRenderer,
     density1,
     density2,
-    copyRenderer,
+    densitySource,
     diffuseRenderer,
-    advectRenderer,
-    setCircleAtPosRenderer,
-    canvasRenderer,
+    gl,
+    horizontalVelocity1,
+    horizontalVelocity2,
+    horizontalVelocitySource,
+    prevFrameTime,
     projectRenderer,
+    setCircleAtPosRenderer,
     setVelocityRenderer,
-    addRenderer,
+    sync,
     textureTemp,
     textureTemp2,
     textureTemp3,
+    verticalVelocity1,
+    verticalVelocity2,
+    verticalVelocitySource,
   } = rc
 
   if (sync === null) {
@@ -584,7 +579,6 @@ const render = (
     sync: newSync,
     prevFrameTime: frameTimeMs,
     frameInProgress: false,
-    // swapTextures: !swapTextures,
   };
 }
 
