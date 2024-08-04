@@ -53,12 +53,13 @@ export enum OutputSelector {
 }
 
 /**
+ * @param outputSelectorRef what should be displayed at the output. The refs are used and not state to
+ * prevent rerender on state change, because we want to retain the internal shader state.
  * @param width width of the internal representation of the state.
  * @param height height of the internal representation of the state.
  */
 export interface ShaderProps {
   setFps?: (fps: number) => void
-  viscosity?: number
   outputSelectorRef?: React.MutableRefObject<OutputSelector>
   diffusionRateRef?: React.MutableRefObject<number>
   viscosityRef?: React.MutableRefObject<number>
