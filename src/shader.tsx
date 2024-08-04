@@ -45,6 +45,19 @@ interface Movement {
   pCurr: XYT
 }
 
+/** Select the input method, i.e. what happens when the user clicks the canvas or drags the mouse. */
+export enum InputSelector {
+  /** Update density */
+  DENSITY = "DENSITY",
+  /** Update velocity  */
+  VELOCITY = "VELOCITY",
+  /** Update density and velocity */
+  DENSITY_AND_VELOCITY = "DENSITY_AND_VELOCITY",
+}
+
+/**
+ * Select what should be displayed at the output.
+ */
 export enum OutputSelector {
   DENSITY = "DENSITY",
   HORIZONTAL_VELOCITY = "HORIZONTAL_VELOCITY",
@@ -55,11 +68,14 @@ export enum OutputSelector {
 /**
  * The refs are used and not state to prevent rerender on state change, because we want to retain the internal shader state.
  * 
+ * @param inputSelector what happens when the user interacts with the canvas.
+ * @param outputSelector what to display at the output.
  * @param width width of the internal representation of the state.
  * @param height height of the internal representation of the state.
  */
 export interface ShaderProps {
   setFps?: (fps: number) => void
+  inputSelectorRef?: React.MutableRefObject<InputSelector>
   outputSelectorRef?: React.MutableRefObject<OutputSelector>
   diffusionRateRef?: React.MutableRefObject<number>
   viscosityRef?: React.MutableRefObject<number>
@@ -109,15 +125,6 @@ export const Shader = ({
   )
 
   const animate = useCallback((frameTimeMs: number) => {
-    //var deltaMs = 0;
-    //if (prevTimeRef.current !== 0) {
-    //  deltaMs = timeMs - prevTimeRef.current
-    //}
-    //prevTimeRef.current = timeMs
-    //if (setFps) {
-    //  setFps(1000/deltaMs)
-    //}
-    // TODO do not reset deltaMs if the animation frame was not finished.
     var rc = renderingContextRef.current
     if (rc !== undefined) {
       const t0 = rc.prevFrameTime
@@ -266,11 +273,11 @@ const initializeRenderingContext = ({width, height}: {width: number, height: num
     return new Texture({ gl, texture_id, height, width, type: "float" });
   }
   
-  const sourceMagnitude = 10
-  const densitySourceValues = Array(width * height).fill(0)
-  densitySourceValues[width * (Math.floor(height / 2)) + Math.floor(height / 2)] = sourceMagnitude // initialize single pixel in the middle
-
-  const densitySource = newTexture(TEXTURE_SOURCE).setValues(densitySourceValues)
+  //const sourceMagnitude = 10
+  //const densitySourceValues = Array(width * height).fill(0)
+  //densitySourceValues[width * (Math.floor(height / 2)) + Math.floor(height / 2)] = sourceMagnitude // initialize single pixel in the middle
+  //const densitySource = newTexture(TEXTURE_SOURCE).setValues(densitySourceValues)
+  const densitySource = newTexture(TEXTURE_SOURCE).fill(0)
 
   const horizontalVelocity1 = newTexture(TEXTURE_V_HOR_1).fill(0);
   const horizontalVelocity2 = newTexture(TEXTURE_V_HOR_2).fill(0.0);

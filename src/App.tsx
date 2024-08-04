@@ -1,6 +1,6 @@
 import React, {useMemo, useState} from 'react';
 import './App.css';
-import { Shader, OutputSelector } from './shader';
+import { Shader, OutputSelector, InputSelector } from './shader';
 import { Slider, ToggleButtonGroup, ToggleButton } from '@mui/material';
 import { useStateRef } from './useStateRef';
 
@@ -8,6 +8,7 @@ function App() {
   const [diffusionRate, setDiffusionRate, diffusionRateRef] = useStateRef(0.002)
   const [viscosity, setViscosity, viscosityRef] = useStateRef(0.01)
   const [outputSelector, setOutputSelector, outputSelectorRef] = useStateRef(OutputSelector.DENSITY)
+  const [inputSelector, setInputSelector, inputSelectorRef] = useStateRef(InputSelector.DENSITY_AND_VELOCITY)
   const [fps, setFps] = useState(0)
 
   const shader = useMemo(() => (
@@ -73,10 +74,24 @@ function App() {
     </ToggleButtonGroup>
   )
 
+  const inputSelectorButtons = (
+    <ToggleButtonGroup color="primary" value={inputSelector} exclusive onChange={
+      (e) => {
+        const value = e.target.value as InputSelector
+        setInputSelector(value)
+      }
+}>
+         <ToggleButton value={InputSelector.DENSITY_AND_VELOCITY}>Dens. and vel.</ToggleButton>
+         <ToggleButton value={InputSelector.DENSITY}>Dens.</ToggleButton>
+         <ToggleButton value={InputSelector.VELOCITY}>Vel.</ToggleButton>
+    </ToggleButtonGroup>
+  )
+
   return (
     <div style={{marginLeft: "3em"}}>
       <div style={{height: "3em"}}></div>
       <div className="sliderContainer" hidden={false}>
+        <div>{inputSelectorButtons}</div>
         <div>{outputSelectorButtons}</div>
         {diffusionRateSlider}
         {viscositySlider}
