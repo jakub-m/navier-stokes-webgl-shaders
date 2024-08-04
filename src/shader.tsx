@@ -79,6 +79,7 @@ export interface ShaderProps {
   outputSelectorRef?: React.MutableRefObject<OutputSelector>
   diffusionRateRef?: React.MutableRefObject<number>
   viscosityRef?: React.MutableRefObject<number>
+  runRef?: React.MutableRefObject<boolean>
   width?: number
   height?: number
   canvasStyle?: React.CSSProperties
@@ -90,14 +91,14 @@ export const Shader = ({
   viscosityRef,
   inputSelectorRef,
   outputSelectorRef,
+  runRef,
   width=defaultWidth,
   height=defaultHeight,
   canvasStyle=defaultCanvasStyle,
 }: ShaderProps) => {
-  const [run, setRun] = useState(false); // default run
   const requestAnimationFrameRef = useRef<number>()
   const renderingContextRef = useRef<RenderingContext>()
-  const [pausePlayButton, setPausePlayButton] = useState("play")
+  //const [pausePlayButton, setPausePlayButton] = useState("play")
    // If mouseMovementRef is undefined, then there is no button pressed.
   const mouseMovementRef = useRef<Movement | undefined>()
 
@@ -128,10 +129,12 @@ export const Shader = ({
     () => getRefCurrentOrDefault(mouseMovementRef, undefined),
     [mouseMovementRef]
   )
+  
+  const getRunRef = useCallback(() => getRefCurrentOrDefault(runRef, false), [runRef])
 
   const animate = useCallback((frameTimeMs: number) => {
     var rc = renderingContextRef.current
-    if (rc !== undefined) {
+    if (rc !== undefined && getRunRef()) {
       const t0 = rc.prevFrameTime
       rc = render({
         rc,
@@ -148,34 +151,30 @@ export const Shader = ({
       }
     }
     requestAnimationFrameRef.current = requestAnimationFrame(animate);
-  }, [getDiffusionRate, getOutputSelector, getViscosity, getMouseMovement, setFps])
+  }, [getDiffusionRate, getOutputSelector, getViscosity, getMouseMovement, getInputSelector, getRunRef, setFps])
 
   useEffect(() => {
-    // Render GL based on the context once, and repeat in the loop.
-    if (run) {
-      requestAnimationFrameRef.current = requestAnimationFrame(animate);
-    } else {
-      console.log('No run')
-    }
+    // The animation loop is later repeated from inside `animate`.
+    requestAnimationFrameRef.current = requestAnimationFrame(animate);
     return () => {
       if (requestAnimationFrameRef.current === undefined) {
         return
       }
       cancelAnimationFrame(requestAnimationFrameRef.current)
     };
-  }, [animate, run]);
+  }, [animate, runRef]);
 
-  const handleClickPlay = () => {
-    if (run) {
-      // Now stop.
-      setPausePlayButton("play")
-      setRun(false)
-    } else {
-      // Now run.
-      setPausePlayButton("stop")
-      setRun(true)
-    }
-  }
+  //const handleClickPlay = () => {
+  //  if (run) {
+  //    // Now stop.
+  //    setPausePlayButton("play")
+  //    setRun(false)
+  //  } else {
+  //    // Now run.
+  //    setPausePlayButton("stop")
+  //    setRun(true)
+  //  }
+  //}
 
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const tSec = (new Date()).getTime() / 1000
@@ -212,7 +211,6 @@ export const Shader = ({
       <div style={canvasStyle}>
         {canvas}
       </div>
-      <div onClick={handleClickPlay}>{pausePlayButton}</div>
     </>)
 };
 

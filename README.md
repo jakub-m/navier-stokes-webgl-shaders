@@ -57,3 +57,8 @@ An implementation of ["Real-Time Fluid Dynamics for Games"][ref_paper] (Jos Stam
 - [Real-Time Fluid Dynamics for Games][ref_paper]. This article is referred to in this readme and in the code as **the Paper**.
 
 [ref_paper]:https://web.archive.org/web/20200805215025/https://pdfs.semanticscholar.org/847f/819a4ea14bd789aca8bc88e85e906cfc657c.pdf
+
+# Bugs
+
+- The mass seem not to be constant. I can move the density around and it seems to not conserve the mass.
+- Time delta between frames is not passed properly to the shader.

@@ -1,7 +1,7 @@
-import React, {useMemo, useState} from 'react';
+import React, {useMemo, useState, useRef, useEffect} from 'react';
 import './App.css';
 import { Shader, OutputSelector, InputSelector } from './shader';
-import { Slider, ToggleButtonGroup, ToggleButton } from '@mui/material';
+import { Slider, ToggleButtonGroup, ToggleButton, Button, setRef } from '@mui/material';
 import { useStateRef } from './useStateRef';
 
 function App() {
@@ -9,6 +9,8 @@ function App() {
   const [viscosity, setViscosity, viscosityRef] = useStateRef(0.01)
   const [outputSelector, setOutputSelector, outputSelectorRef] = useStateRef(OutputSelector.DENSITY)
   const [inputSelector, setInputSelector, inputSelectorRef] = useStateRef(InputSelector.DENSITY_AND_VELOCITY)
+  const [play, setPlay] = useState(false)
+  const playRef = useRef(false)
   const [fps, setFps] = useState(0)
 
   const shader = useMemo(() => (
@@ -18,6 +20,7 @@ function App() {
      viscosityRef={viscosityRef}
      inputSelectorRef={inputSelectorRef}
      outputSelectorRef={outputSelectorRef}
+     runRef={playRef}
      canvasStyle={{width:"512px", height:"512px", border: "1px solid black"}}
      height={512}
      width={512}
@@ -88,6 +91,15 @@ function App() {
     </ToggleButtonGroup>
   )
 
+  const playButton = (
+    <Button variant='outlined' onClick={(e) => {
+      setPlay((p) => !p)
+    }}>
+      {play ? "Stop" : "Play"}
+    </Button>
+  )
+  useEffect(() => {playRef.current = play}, [play])
+
   return (
     <div style={{marginLeft: "3em"}}>
       <div style={{height: "3em"}}></div>
@@ -96,6 +108,7 @@ function App() {
         <div>{outputSelectorButtons}</div>
         {diffusionRateSlider}
         {viscositySlider}
+        {playButton}
       </div>
       {shader}
       <div>{Math.round(fps)} fps</div>

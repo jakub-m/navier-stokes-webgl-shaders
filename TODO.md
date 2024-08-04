@@ -1,7 +1,5 @@
 # TODO
 
-Start and stop without restart
-
 Separate restart btn
 
 Change view and tooling with keys
