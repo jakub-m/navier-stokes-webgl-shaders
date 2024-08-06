@@ -1,12 +1,12 @@
 import React, {useMemo, useState, useRef, useEffect} from 'react';
 import './App.css';
 import { Shader, OutputSelector, InputSelector } from './shader';
-import { Slider, ToggleButtonGroup, ToggleButton, Button, setRef } from '@mui/material';
+import { Slider, ToggleButtonGroup, ToggleButton, Button } from '@mui/material';
 import { useStateRef } from './useStateRef';
 
 function App() {
-  const [diffusionRate, setDiffusionRate, diffusionRateRef] = useStateRef(0.002)
-  const [viscosity, setViscosity, viscosityRef] = useStateRef(0.01)
+  const [diffusionRate, setDiffusionRate, diffusionRateRef] = useStateRef(0.1)
+  const [viscosity, setViscosity, viscosityRef] = useStateRef(0.1)
   const [outputSelector, setOutputSelector, outputSelectorRef] = useStateRef(OutputSelector.DENSITY)
   const [inputSelector, setInputSelector, inputSelectorRef] = useStateRef(InputSelector.DENSITY_AND_VELOCITY)
   const [play, setPlay] = useState(false)
@@ -32,10 +32,12 @@ function App() {
       Diffusion
       <Slider 
         size="small"
+        valueLabelFormat={(value) => `Diffusion ${value.toFixed(2)}`}
         valueLabelDisplay="auto"
+        scale={(value) => Math.pow(10000, value) / 100}
         min={0}
         step={0.001}
-        max={0.2}
+        max={1}
         value={diffusionRate}
         onChange={(e) => {
           const t = e.target as HTMLInputElement;
@@ -50,10 +52,12 @@ function App() {
       Viscosity
       <Slider 
         size="small"
+        valueLabelFormat={(value) => `Viscosity ${value.toFixed(2)}`}
         valueLabelDisplay="auto"
+        scale={(value) => Math.pow(10000, value) / 100}
         min={0}
         step={0.001}
-        max={0.1}
+        max={1}
         value={viscosity}
         onChange={(e) => {
           const t = e.target as HTMLInputElement;

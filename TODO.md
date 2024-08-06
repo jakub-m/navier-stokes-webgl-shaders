@@ -10,11 +10,8 @@ Two densities with different colors.
 
 Draw speed as a mix of two matrices with different channels.
 
-Dynamic output ranges, possibly logarighmic.
+Setup some scenario.
 
-Logarithmic rates, instead of linear.
+Bug: Fix timing (no dt passed to shader)
 
-bug: Fix timing (no dt passed to shader)
 
-Pack struct texture matrix.
-https://webglfundamentals.org/webgl/lessons/webgl-qna-how-to-use-textures-as-data.html
