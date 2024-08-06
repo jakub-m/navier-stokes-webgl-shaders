@@ -10,18 +10,17 @@ import {
   validateDefined,
   appendCommonGlsl,
 } from "../webGlUtil";
+import { BoundaryMode, SetBoundaryRenderer } from "./setBoundaryRenderer";
+import { CopyRenderer } from "./copyRenderer";
 
-//export interface DiffuseRendererProps {
-//  gl: GL;
-//  diffusionRate: number;
-//}
-//
 /**
  * A shader that implements "advect" operation from the Paper (see README).
  */
 export class AdvectRenderer {
   private gl: GL;
   private program: WebGLProgram;
+  private setBoundaryRenderer: SetBoundaryRenderer;
+  private copyRenderer: CopyRenderer;
 
   constructor(gl: GL) {
     this.gl = gl;
@@ -30,9 +29,32 @@ export class AdvectRenderer {
       genericVertexShader,
       appendCommonGlsl(advectFragmentShader)
     );
+    this.copyRenderer = new CopyRenderer(gl);
+    this.setBoundaryRenderer = new SetBoundaryRenderer(gl);
   }
 
   render(
+    inputValues: Texture,
+    finalOutputValues: Texture,
+    horizontalVelocity: Texture,
+    verticalVelocity: Texture,
+    temp: Texture,
+    deltaSec: number,
+    boundaryMode: BoundaryMode
+  ) {
+    this.renderAdvect(
+      inputValues,
+      finalOutputValues,
+      horizontalVelocity,
+      verticalVelocity,
+      deltaSec
+    );
+
+    this.copyRenderer.render(finalOutputValues, temp);
+    this.setBoundaryRenderer.render(temp, finalOutputValues, boundaryMode);
+  }
+
+  private renderAdvect(
     inputValues: Texture,
     finalOutputValues: Texture,
     horizontalVelocity: Texture,

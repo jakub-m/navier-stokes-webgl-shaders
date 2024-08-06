@@ -16,7 +16,7 @@ import {
   swap,
 } from "../webGlUtil";
 import { CopyRenderer } from "./copyRenderer";
-import { validate } from "webpack";
+import { BoundaryMode, SetBoundaryRenderer } from "./setBoundaryRenderer";
 
 const IN = 0;
 const OUT = 1;
@@ -32,10 +32,12 @@ export class ProjectRenderer {
   private program4_calcHorVel: WebGLProgram;
   private program5_calcVerVel: WebGLProgram;
   private copyRenderer: CopyRenderer;
+  private setBoundaryRenderer: SetBoundaryRenderer;
 
   constructor(gl: GL) {
     this.gl = gl;
     this.copyRenderer = new CopyRenderer(gl);
+    this.setBoundaryRenderer = new SetBoundaryRenderer(gl);
     this.program1_calcDiv = createProgramFromSources(
       gl,
       genericVertexShader,
@@ -77,6 +79,7 @@ export class ProjectRenderer {
     tempDiv: Texture,
     tempPIn: Texture,
     tempPOut: Texture,
+    temp: Texture,
     outputHorizontalVelocity: Texture,
     outputVerticalVelocity: Texture
   ) {
@@ -88,17 +91,39 @@ export class ProjectRenderer {
       tempPOut,
     ]);
     this.renderCalcDiv(inputHorizontalVelocity, inputVerticalVelocity, tempDiv);
+    this.copyRenderer.render(tempDiv, temp);
+    this.setBoundaryRenderer.render(temp, tempDiv, BoundaryMode.MODE_0);
+
+    // FIXME: P is not emptied, the edge is left as is, the inner part is emptied.
     this.renderEmptyP(tempPIn);
+    // FIXME: set boundary for P here.
+
     const tempP = this.renderCalcPFromDiv(tempDiv, tempPIn, tempPOut);
+    this.copyRenderer.render(tempPOut, temp);
+    this.setBoundaryRenderer.render(temp, tempPOut, BoundaryMode.MODE_0);
+
     this.renderCalcHorizontalVelocity(
       inputHorizontalVelocity,
       tempP,
       outputHorizontalVelocity
     );
+    this.copyRenderer.render(outputHorizontalVelocity, temp);
+    this.setBoundaryRenderer.render(
+      temp,
+      outputHorizontalVelocity,
+      BoundaryMode.MODE_1
+    );
+
     this.renderCalcVerticalVelocity(
       inputVerticalVelocity,
       tempP,
       outputVerticalVelocity
+    );
+    this.copyRenderer.render(outputVerticalVelocity, temp);
+    this.setBoundaryRenderer.render(
+      temp,
+      outputVerticalVelocity,
+      BoundaryMode.MODE_2
     );
   }
 

@@ -25,6 +25,7 @@ const TEXTURE_V_HOR_S = 8;
 const TEXTURE_V_VER_S = 9;
 const TEXTURE_TEMP_2 = 10;
 const TEXTURE_TEMP_3 = 11;
+const TEXTURE_TEMP_4 = 12;
 
 const IN = 0
 const OUT = 1
@@ -253,6 +254,7 @@ interface RenderingContext  {
   textureTemp: Texture
   textureTemp2: Texture
   textureTemp3: Texture
+  textureTemp4: Texture
 
   copyRenderer: CopyRenderer
   diffuseRenderer: DiffuseRenderer
@@ -305,6 +307,7 @@ const initializeRenderingContext = ({width, height}: {width: number, height: num
   const textureTemp = newTexture(TEXTURE_TEMP).fill(0);
   const textureTemp2 = newTexture(TEXTURE_TEMP_2).fill(0);
   const textureTemp3 = newTexture(TEXTURE_TEMP_3).fill(0);
+  const textureTemp4 = newTexture(TEXTURE_TEMP_4).fill(0);
 
   const copyRenderer = new CopyRenderer(gl);
   const diffuseRenderer = new DiffuseRenderer(gl);
@@ -337,6 +340,7 @@ const initializeRenderingContext = ({width, height}: {width: number, height: num
     textureTemp,
     textureTemp2,
     textureTemp3,
+    textureTemp4,
     verticalVelocity1,
     verticalVelocity2,
     verticalVelocitySource,
@@ -375,6 +379,7 @@ const render = (
     textureTemp,
     textureTemp2,
     textureTemp3,
+    textureTemp4,
     verticalVelocity1,
     verticalVelocity2,
     verticalVelocitySource,
@@ -466,10 +471,25 @@ const render = (
   // 3. Combine initial density and t1 to t0.
   // 4. Repeat N times.
   swap(densities)
-  diffuseRenderer.render(densities[IN], textureTemp, densities[OUT], deltaSec, diffusionRate, BoundaryMode.MODE_0)
+  diffuseRenderer.render(
+    densities[IN],
+    textureTemp,
+    densities[OUT],
+    deltaSec,
+    diffusionRate,
+    BoundaryMode.MODE_0,
+  )
 
   swap(densities)
-  advectRenderer.render(densities[IN], densities[OUT], horizontalVelocities[IN], verticalVelocities[IN], deltaSec);
+  advectRenderer.render(
+    densities[IN],
+    densities[OUT],
+    horizontalVelocities[IN],
+    verticalVelocities[IN],
+    textureTemp,
+    deltaSec,
+    BoundaryMode.MODE_0,
+  );
 
   /////////////////
   // Velocity step.
@@ -513,6 +533,7 @@ const render = (
     horizontalVelocities[OUT],
     deltaSec,
     viscosity,
+    BoundaryMode.MODE_1,
   )
   diffuseRenderer.render(
     verticalVelocities[IN],
@@ -520,6 +541,7 @@ const render = (
     verticalVelocities[OUT],
     deltaSec,
     viscosity,
+    BoundaryMode.MODE_2,
   )
 
   swap(horizontalVelocities)
@@ -531,6 +553,7 @@ const render = (
     textureTemp,
     textureTemp2,
     textureTemp3,
+    textureTemp4,
     horizontalVelocities[OUT],
     verticalVelocities[OUT],
   )
@@ -543,14 +566,18 @@ const render = (
     horizontalVelocities[OUT],
     horizontalVelocities[IN],
     verticalVelocities[IN],
+    textureTemp,
     deltaSec,
+    BoundaryMode.MODE_1,
   );
   advectRenderer.render(
     verticalVelocities[IN],
     verticalVelocities[OUT],
     horizontalVelocities[IN],
     verticalVelocities[IN],
+    textureTemp,
     deltaSec,
+    BoundaryMode.MODE_2,
   )
 
   swap(verticalVelocities)
@@ -562,6 +589,7 @@ const render = (
     textureTemp,
     textureTemp2,
     textureTemp3,
+    textureTemp4,
     horizontalVelocities[OUT],
     verticalVelocities[OUT],
   )

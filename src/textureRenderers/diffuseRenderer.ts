@@ -53,7 +53,7 @@ export class DiffuseRenderer {
     finalOutput: Texture,
     deltaSec: number,
     diffusionRate: number,
-    boundaryMode?: BoundaryMode
+    boundaryMode: BoundaryMode
   ) {
     validateTexturesHaveSameSize([beforeDiffusion, tempOutput, finalOutput]);
 
@@ -70,14 +70,13 @@ export class DiffuseRenderer {
         diffusionRate
       );
       swap(diffusion);
-      if (boundaryMode !== undefined) {
-        this.setBoundaryRenderer.render(
-          diffusion[IN],
-          diffusion[OUT],
-          boundaryMode
-        );
-        swap(diffusion);
-      }
+
+      this.setBoundaryRenderer.render(
+        diffusion[IN],
+        diffusion[OUT],
+        boundaryMode
+      );
+      swap(diffusion);
     }
     // Ensure that the original `finalOutput` has the actually final diffused values.
     this.copyRenderer.render(diffusion[IN], diffusion[OUT]);
