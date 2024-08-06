@@ -25,32 +25,37 @@ void main() {
     float max_y = height - 1;
     vec2 pos = fragCoordToResolution();
 
+    // Left side, without corners. b==1 reverses the values at the almost-left line, otherwise sets the same values.
     if (pos.x == min_x && pos.y >= 1 && pos.y <= max_y - 1) {
       // x[IX(0 ,i)] = b==1 ? –x[IX(1,i)] : x[IX(1,i)];
-      result = u_mode_b == 1 ? -getDataAtDXDY(1, 0) : getDataAtDXDY(1, 0);
+      result = u_mode_b == 1 ? -getDataAtDXDY(u_source, 1, 0) : getDataAtDXDY(u_source, 1, 0);
     }
+    // Right side.
     else if (pos.x == max_x && pos.y >= 1 && pos.y <= max_y - 1) {
       // x[IX(N+1,i)] = b==1 ? –x[IX(N,i)] : x[IX(N,i)];
-      result = u_mode_b == 1 ? -getDataAtDXDY(-1, 0) : getDataAtDXDY(-1, 0);
+      result = u_mode_b == 1 ? -getDataAtDXDY(u_source, -1, 0) : getDataAtDXDY(u_source, -1, 0);
     }
+    // Top. b == 2 reverses the values at the almost-top, otherwise just rewrites the values.
     else if (pos.x >= 1 && pos.x <= max_x - 1 && pos.y == min_y) {
       // x[IX(i,0 )] = b==2 ? –x[IX(i,1)] : x[IX(i,1)];
-      result = u_mode_b == 2 ? -getDataAtDXDY(0, 1) : getDataAtDXDY(0, 1);
+      result = u_mode_b == 2 ? -getDataAtDXDY(u_source, 0, 1) : getDataAtDXDY(u_source, 0, 1);
     }
+    // Bottom.
     else if (pos.x >= 1 && pos.x <= max_x - 1 && pos.y == max_y - 1) {
   ///   x[IX(i,N+1)] = b==2 ? –x[IX(i,N)] : x[IX(i,N)];
-      result = u_mode_b == 2 ? -getDataAtDXDY(0, -1) : getDataAtDXDY(0, -1);
+      result = u_mode_b == 2 ? -getDataAtDXDY(u_source, 0, -1) : getDataAtDXDY(u_source, 0, -1);
     }
+    // Corners
     else if (pos == vec2(min_x, min_y)) {
-      result = 0.5 * (getDataAt(min_x + 1, min_y) + getDataAt(min_x, min_y + 1));
+      result = 0.5 * (getDataAt(u_source, min_x + 1, min_y) + getDataAt(u_source, min_x, min_y + 1));
     } else if (pos == vec2(min_x, max_y)) {
-      result = 0.5 * (getDataAt(min_x + 1, max_y) + getDataAt(min_x, max_y - 1));
+      result = 0.5 * (getDataAt(u_source, min_x + 1, max_y) + getDataAt(u_source, min_x, max_y - 1));
     } else if (pos == vec2(max_x, min_y)) {
-      result = 0.5 * (getDataAt(max_x - 1, min_y) + getDataAt(max_x, min_y + 1));
+      result = 0.5 * (getDataAt(u_source, max_x - 1, min_y) + getDataAt(u_source, max_x, min_y + 1));
     } else if (pos == vec2(max_x, max_y)) {
-      result = 0.5 * (getDataAt(max_x - 1, max_y) + getDataAt(max_x, max_y - 1));
+      result = 0.5 * (getDataAt(u_source, max_x - 1, max_y) + getDataAt(u_source, max_x, max_y - 1));
     } else {
-      result = getData();
+      result = getData(u_source);
     }
 
     output_color = vec4(result, 1, 1, 1);
