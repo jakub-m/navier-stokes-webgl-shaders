@@ -1,5 +1,14 @@
 // A file appended to all the other shaders.
 
+
+/* Header to be included in the files using this commong .glsl file:
+float getData(sampler2D source);
+float getDataAtDXDY(sampler2D source, int dx, int dy);
+float getDataAt(sampler2D source, int x, int y);
+vec2 fragCoordToResolution();
+vec2 resolutionToTextureCoord(vec2 abs_coord);
+*/
+
 float getData(sampler2D source) {
     return texture(source, v_input_texture_coord)[0];
 }

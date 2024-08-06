@@ -10,6 +10,7 @@ import { AdvectRenderer } from "./textureRenderers/advectRenderer";
 import { SetCircleAtPosRenderer } from "./textureRenderers/setCircleAtPosRenderer";
 import { ProjectRenderer } from "./textureRenderers/projectRenderer";
 import { SetVelocityRenderer } from "./textureRenderers/setVelocityRenderer";
+import { BoundaryMode } from "./textureRenderers/setBoundaryRenderer";
 
 const canvasId = "#c";
 const TEXTURE_V_HOR_1 = 0;
@@ -465,7 +466,7 @@ const render = (
   // 3. Combine initial density and t1 to t0.
   // 4. Repeat N times.
   swap(densities)
-  diffuseRenderer.render(densities[IN], textureTemp, densities[OUT], deltaSec, diffusionRate)
+  diffuseRenderer.render(densities[IN], textureTemp, densities[OUT], deltaSec, diffusionRate, BoundaryMode.MODE_0)
 
   swap(densities)
   advectRenderer.render(densities[IN], densities[OUT], horizontalVelocities[IN], verticalVelocities[IN], deltaSec);

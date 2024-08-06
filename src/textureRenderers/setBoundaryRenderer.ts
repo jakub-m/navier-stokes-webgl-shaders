@@ -11,6 +11,12 @@ import {
   appendCommonGlsl,
 } from "../webGlUtil";
 
+export enum BoundaryMode {
+  MODE_0 = 0,
+  MODE_1 = 1,
+  MODE_2 = 2,
+}
+
 /**
  * Implement "set_bnd" method from the Paper.
  */
@@ -27,10 +33,7 @@ export class SetBoundaryRenderer {
     );
   }
 
-  render(input: Texture, output: Texture, mode: number) {
-    if (![0, 1, 2].includes(mode)) {
-      throw Error("mode must be 0,1,2");
-    }
+  render(input: Texture, output: Texture, mode: BoundaryMode) {
     validateTexturesHaveSameSize([output, input]);
     const gl = this.gl;
     const program = this.program;

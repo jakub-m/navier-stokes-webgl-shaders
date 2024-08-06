@@ -21,7 +21,7 @@ function App() {
      inputSelectorRef={inputSelectorRef}
      outputSelectorRef={outputSelectorRef}
      runRef={playRef}
-     canvasStyle={{width:"512px", height:"512px", border: "1px solid black"}}
+     canvasStyle={{width:"512px", height:"512px", border: "1px solid orange"}}
      height={512}
      width={512}
    />

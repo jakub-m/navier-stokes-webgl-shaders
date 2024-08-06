@@ -13,7 +13,7 @@ import {
 } from "../webGlUtil";
 
 import { CopyRenderer } from "./copyRenderer";
-import { SetBoundaryRenderer } from "./setBoundaryRenderer";
+import { BoundaryMode, SetBoundaryRenderer } from "./setBoundaryRenderer";
 
 const IN = 0;
 const OUT = 1;
@@ -25,7 +25,7 @@ export class DiffuseRenderer {
   private gl: GL;
   private program: WebGLProgram;
   private copyRenderer: CopyRenderer;
-  // private setBoundaryRenderer: SetBoundaryRenderer;
+  private setBoundaryRenderer: SetBoundaryRenderer;
 
   constructor(gl: GL) {
     this.gl = gl;
@@ -35,7 +35,7 @@ export class DiffuseRenderer {
       appendCommonGlsl(diffuseFragmentShader)
     );
     this.copyRenderer = new CopyRenderer(gl);
-    // this.setBoundaryRenderer = new SetBoundaryRenderer(gl);
+    this.setBoundaryRenderer = new SetBoundaryRenderer(gl);
   }
 
   /**
@@ -52,13 +52,13 @@ export class DiffuseRenderer {
     tempOutput: Texture,
     finalOutput: Texture,
     deltaSec: number,
-    diffusionRate: number
+    diffusionRate: number,
+    boundaryMode?: BoundaryMode
   ) {
     validateTexturesHaveSameSize([beforeDiffusion, tempOutput, finalOutput]);
 
     const diffusion = [tempOutput, finalOutput];
     this.copyRenderer.render(beforeDiffusion, tempOutput);
-    //this.copyRenderer.render(beforeDiffusion, finalOutput);
 
     // Diffuse applies k=20 times, iteratively (see p.6 of the Paper).
     for (let i = 0; i < 20; i++) {
@@ -70,6 +70,14 @@ export class DiffuseRenderer {
         diffusionRate
       );
       swap(diffusion);
+      if (boundaryMode !== undefined) {
+        this.setBoundaryRenderer.render(
+          diffusion[IN],
+          diffusion[OUT],
+          boundaryMode
+        );
+        swap(diffusion);
+      }
     }
     // Ensure that the original `finalOutput` has the actually final diffused values.
     this.copyRenderer.render(diffusion[IN], diffusion[OUT]);
