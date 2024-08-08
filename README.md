@@ -2,6 +2,7 @@ navier-stokes-webgl-shaders
 ---------------------------
 
 An implementation of ["Real-Time Fluid Dynamics for Games"][ref_paper] (Jos Stam) using WebGL.
+The computation is done with shaders, with textures as input and output matrices.
 
 # Running
 
