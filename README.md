@@ -3,6 +3,12 @@ navier-stokes-webgl-shaders
 
 An implementation of ["Real-Time Fluid Dynamics for Games"][ref_paper] (Jos Stam) using WebGL.
 
+# Running
+
+```
+npm run webpack-start
+```
+
 # My naive understanding of GPGPU
 
 1. There are two shaders: Vertex Shader and Fragment Shader. Vertex and Fragment shader compose a Program.
