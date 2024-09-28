@@ -30,7 +30,7 @@
     "eject": "react-scripts eject",
     "___webpack-start": "webpack serve -mode development -open",
     "webpack-start": "webpack-dev-server --mode development --config webpack.config.js --port 3000",
-    "webpack-build": "webpack -mode production"
+    "webpack-build": "webpack --mode production"
   },
   "eslintConfig": {
     "extends": [
